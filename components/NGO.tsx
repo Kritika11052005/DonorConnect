@@ -114,7 +114,7 @@ const NGOPartnersSection = () => {
           <CarouselContent className="-ml-8">
             {ngos.map((ngo, index) => (
               <CarouselItem key={index} className="pl-8 md:basis-1/3 lg:basis-1/5">
-                <div className="flex items-center justify-center h-32 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-4">
+                <div className="flex items-center justify-center h-32">
                   <Image
                     src={ngo.logo}
                     alt={ngo.name}
@@ -126,8 +126,8 @@ const NGOPartnersSection = () => {
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious className="hidden md:flex -left-12 bg-white border-gray-300 text-gray-700 hover:bg-gray-50" />
-          <CarouselNext className="hidden md:flex -right-12 bg-white border-gray-300 text-gray-700 hover:bg-gray-50" />
+          <CarouselPrevious className="hidden md:flex -left-12 bg-white/80 border-gray-300 text-gray-700 hover:bg-white" />
+          <CarouselNext className="hidden md:flex -right-12 bg-white/80 border-gray-300 text-gray-700 hover:bg-white" />
         </Carousel>
       </div>
     </section>

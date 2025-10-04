@@ -19,7 +19,7 @@ export default function SignInPage() {
         routing="path"
         path="/sign-in"
         signUpUrl={`/sign-up${role ? `?role=${role}` : ''}`}
-        afterSignInUrl={`/dashboard/${role || 'user'}`}
+        afterSignInUrl={role ? `/onboarding?role=${role}` : `/dashboard/donor`}
       />
     </div>
   );

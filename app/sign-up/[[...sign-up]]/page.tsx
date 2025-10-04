@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 
 export default function SignUpPage() {
   const searchParams = useSearchParams();
-  const role = searchParams.get('role');
+  const role = searchParams.get('role') || 'donor';
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50">
@@ -19,10 +19,7 @@ export default function SignUpPage() {
         routing="path"
         path="/sign-up"
         signInUrl={`/sign-in${role ? `?role=${role}` : ''}`}
-        afterSignUpUrl={`/dashboard/${role || 'user'}`}
-        unsafeMetadata={{
-          role: role || 'user'
-        }}
+        afterSignUpUrl={`/onboarding?role=${role}`}
       />
     </div>
   );

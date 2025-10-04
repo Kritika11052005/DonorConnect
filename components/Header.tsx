@@ -62,7 +62,7 @@ const Header = () => {
 
   return (
     <>
-      <header
+      <header 
         className="fixed top-0 left-0 right-0 w-full z-50 bg-transparent backdrop-blur-sm"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -70,18 +70,18 @@ const Header = () => {
             {/* Logo */}
             <Link href="/" className="flex items-center gap-3 cursor-pointer group -ml-2">
               <div className="relative">
-                <Image
-                  src="/donorconnect.png"
-                  alt="DonorConnect Icon"
-                  width={40}
+                <Image 
+                  src="/donorconnect.png" 
+                  alt="DonorConnect Icon" 
+                  width={40} 
                   height={40}
                   className="h-10 w-10 transition-transform group-hover:scale-110"
                 />
               </div>
-              <Image
-                src="/donorconnectwritten.png"
-                alt="DonorConnect Logo"
-                width={150}
+              <Image 
+                src="/donorconnectwritten.png" 
+                alt="DonorConnect Logo" 
+                width={150} 
                 height={40}
                 className="h-10 w-auto"
               />
@@ -91,15 +91,13 @@ const Header = () => {
             <div className="flex items-center gap-4 -mr-2">
               {!isSignedIn ? (
                 <>
-                  <button
-                    type="button"
+                  <button 
                     onClick={openSignIn}
                     className="px-4 py-2 text-gray-700 font-medium hover:text-rose-500 transition-colors"
                   >
                     Sign In
                   </button>
-                  <button
-                    type="button"
+                  <button 
                     onClick={openSignUp}
                     className="px-6 py-2.5 bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-full hover:from-rose-600 hover:to-pink-600 transition-all transform hover:scale-105 shadow-md hover:shadow-lg font-medium"
                   >
@@ -107,12 +105,11 @@ const Header = () => {
                   </button>
                 </>
               ) : (
-                <UserButton
+                <UserButton 
                   afterSignOutUrl="/"
-                  signInUrl="/sign-in"  
                   appearance={{
                     elements: {
-                      avatarBox: "w-10 h-10 ring-2 ring-rose-500/20 hover:ring-rose-500/40 transition-all"
+                      avatarBox: "w-100 h-100 ring-2 ring-rose-500/20 hover:ring-rose-500/40 transition-all"
                     }
                   }}
                 />
@@ -126,7 +123,7 @@ const Header = () => {
       {showModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           {/* Backdrop */}
-          <div
+          <div 
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setShowModal(false)}
           ></div>
@@ -135,9 +132,7 @@ const Header = () => {
           <div className="relative bg-white rounded-2xl shadow-2xl max-w-4xl w-full p-8 max-h-[90vh] overflow-y-auto">
             {/* Close Button */}
             <button
-              type="button"
               onClick={() => setShowModal(false)}
-              aria-label="Close modal"
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
             >
               <X className="w-6 h-6" />
@@ -177,8 +172,7 @@ const Header = () => {
             <div className="text-center mt-8 pt-6 border-t border-gray-200">
               <p className="text-gray-600">
                 {modalType === 'signin' ? "Don't have an account? " : "Already have an account? "}
-                <button
-                  type="button"
+                <button 
                   onClick={() => setModalType(modalType === 'signin' ? 'signup' : 'signin')}
                   className="text-rose-500 hover:text-rose-600 font-semibold"
                 >

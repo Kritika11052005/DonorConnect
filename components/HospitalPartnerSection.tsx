@@ -17,17 +17,17 @@ const HospitalPartnersSection = () => {
   );
 
   const hospitals = [
-    { name: 'AIIMS', logo: '/aiims.png' },
-    { name: 'Apollo Hospital', logo: '/apollo.jfif' },
-    { name: 'Max Healthcare', logo: '/Max-Healthcare-Logo.png' },
-    { name: 'Medanta', logo: '/Medanta-The-Medicity-Logo-Vector.svg-.png' },
-    { name: 'Narayan Health', logo: '/narayan health.png' },
-    { name: 'Postgraduate Institute', logo: '/Postgraduate_Institute_of_Medical_Education_and_Research_Logo.png' },
-    { name: 'Shri Ganga Ram Hospital', logo: '/shri ganga ram.jfif' },
-    { name: 'Tata Memorial', logo: '/tata.jpg' },
-    { name: 'Fortis', logo: '/fortis.png' },
-    { name: 'Christian Medical College', logo: '/Christian_Medical_College_&_Hospital,_Vellore_Logo.png' },
-  ];
+  { name: 'AIIMS', logo: '/aiims.png' },
+  { name: 'Apollo Hospital', logo: '/apollo.jfif' },
+  { name: 'Max Healthcare', logo: '/Max-Healthcare-Logo.png' },
+  { name: 'Medanta', logo: '/Medanta-The-Medicity-Logo-Vector.svg-.png' },
+  { name: 'Narayan Health', logo: '/narayan health.png' },
+  { name: 'Postgraduate Institute', logo: '/Postgraduate_Institute_of_Medical_Education_and_Research_Logo.png' },
+  { name: 'Shri Ganga Ram Hospital', logo: '/shri ganga ram.jfif' },
+  { name: 'Tata Memorial', logo: '/tata.jpg' },
+  { name: 'Fortis', logo: '/fortis.png' },
+  { name: 'Christian Medical College', logo: '/Christian_Medical_College_&_Hospital,_Vellore_Logo.png' },
+];
 
   const features = [
     {
