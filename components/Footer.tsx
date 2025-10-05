@@ -11,7 +11,7 @@ const Footer = () => {
         {/* Made by Section */}
         <div className="text-center mb-8">
           <p className="text-gray-400 text-lg mb-4">
-            Made by <span className="text-rose-500 font-semibold">Kritika Beniwal</span>
+            Made by <span className="text-rose-500 font-semibold">Kritika Benjwal</span>
           </p>
           
           {/* Social Links */}
