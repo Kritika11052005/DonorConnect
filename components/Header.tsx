@@ -13,7 +13,7 @@ const Header = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      const isScrolled = window.scrollY > 10;
+      const isScrolled = window.scrollY > 20;
       if (isScrolled !== scrolled) {
         setScrolled(isScrolled);
       }
@@ -76,47 +76,61 @@ const Header = () => {
   return (
     <>
       <header 
-        className={`fixed top-0 left-0 right-0 w-full z-50 transition-all duration-300 ${
+        className={`absolute top-0 left-0 right-0 w-full z-50 transition-all duration-500 ease-in-out ${
           scrolled 
-            ? 'bg-[#1a2332]/70 backdrop-blur-lg shadow-lg' 
-            : 'header-gradient'
+            ? 'bg-white/90 backdrop-blur-md shadow-lg border-b border-gray-200/50 fixed' 
+            : 'bg-transparent'
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            {/* Logo */}
-            <Link href="/" className="flex items-center gap-3 cursor-pointer group -ml-2">
-              <div className="relative">
+            {/* Logo with Background Box */}
+            <Link href="/" className="flex items-center gap-3 cursor-pointer group">
+              <div className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-300 ${
+                scrolled 
+                  ? 'bg-white/20 shadow-sm hover:shadow-md' 
+                  : 'bg-white/20 backdrop-blur-sm hover:bg-white/30'
+              }`}>
+                <div className="relative">
+                  <Image 
+                    src="/donorconnect.png" 
+                    alt="DonorConnect Icon" 
+                    width={40} 
+                    height={40}
+                    className="h-10 w-10 transition-all duration-300 group-hover:scale-110"
+                  />
+                </div>
                 <Image 
-                  src="/donorconnect.png" 
-                  alt="DonorConnect Icon" 
-                  width={40} 
+                  src="/donorconnectwritten.png" 
+                  alt="DonorConnect Logo" 
+                  width={150} 
                   height={40}
-                  className="h-10 w-10 transition-transform group-hover:scale-110"
+                  className="h-10 w-auto transition-all duration-300"
                 />
               </div>
-              <Image 
-                src="/donorconnectwritten.png" 
-                alt="DonorConnect Logo" 
-                width={150} 
-                height={40}
-                className="h-10 w-auto"
-              />
             </Link>
 
             {/* Auth Buttons */}
-            <div className="flex items-center gap-4 -mr-2">
+            <div className="flex items-center gap-4">
               {!isSignedIn ? (
                 <>
                   <button 
                     onClick={openSignIn}
-                    className="px-4 py-2 font-medium transition-colors text-white hover:text-pink-200"
+                    className={`px-5 py-2.5 font-medium rounded-lg transition-all duration-300 ${
+                      scrolled 
+                        ? 'text-gray-500 hover:text-rose-500 hover:bg-gray-50 bg-white/5 shadow-sm hover:shadow-md' 
+                        : 'text-gray-900 bg-white/30 hover:bg-white backdrop-blur-sm shadow-md hover:shadow-lg'
+                    }`}
                   >
                     Sign In
                   </button>
                   <button 
                     onClick={openSignUp}
-                    className="px-6 py-2.5 bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-full hover:from-rose-600 hover:to-pink-600 transition-all transform hover:scale-105 shadow-md hover:shadow-lg font-medium"
+                    className={`px-6 py-2.5 bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-full hover:from-rose-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105 font-medium ${
+                      scrolled 
+                        ? 'shadow-md hover:shadow-lg' 
+                        : 'shadow-lg hover:shadow-xl'
+                    }`}
                   >
                     Sign Up
                   </button>
@@ -126,7 +140,7 @@ const Header = () => {
                   afterSignOutUrl="/"
                   appearance={{
                     elements: {
-                      avatarBox: "w-100 h-100 ring-2 ring-rose-500/20 hover:ring-rose-500/40 transition-all"
+                      avatarBox: "w-10 h-10 ring-2 ring-rose-500/20 hover:ring-rose-500/40 transition-all"
                     }
                   }}
                 />
@@ -138,27 +152,29 @@ const Header = () => {
 
       {/* Role Selection Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 animate-in fade-in duration-200">
           {/* Backdrop */}
           <div 
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setShowModal(false)}
           ></div>
 
           {/* Modal Content */}
-          <div className="relative bg-white rounded-2xl shadow-2xl max-w-4xl w-full p-8 max-h-[90vh] overflow-y-auto">
+          <div className="relative bg-white rounded-2xl shadow-2xl max-w-4xl w-full p-8 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-300">
             {/* Close Button */}
             <button
               onClick={() => setShowModal(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1.5 transition-all"
             >
               <X className="w-6 h-6" />
             </button>
 
             {/* Header */}
             <div className="text-center mb-8">
-              <h2 className="text-4xl font-bold text-gray-900 mb-2">{title}</h2>
-              <p className="text-gray-600">{subtitle}</p>
+              <h2 className="text-4xl font-bold bg-gradient-to-r from-rose-500 to-pink-500 bg-clip-text text-transparent mb-2">
+                {title}
+              </h2>
+              <p className="text-gray-600 text-lg">{subtitle}</p>
             </div>
 
             {/* Role Cards */}
@@ -170,15 +186,19 @@ const Header = () => {
                     key={role.id}
                     href={`${targetPath}?role=${role.id}`}
                     onClick={() => setShowModal(false)}
-                    className="group relative bg-gradient-to-br from-gray-50 to-white rounded-xl p-6 border-2 border-gray-200 hover:border-gray-300 hover:shadow-xl transition-all transform hover:scale-105"
+                    className="group relative bg-gradient-to-br from-gray-50 to-white rounded-xl p-6 border-2 border-gray-200 hover:border-transparent hover:shadow-2xl transition-all duration-300 transform hover:scale-105 overflow-hidden"
                   >
-                    <div className={`absolute inset-0 bg-gradient-to-br ${role.color} opacity-0 group-hover:opacity-5 rounded-xl transition-opacity`}></div>
+                    <div className={`absolute inset-0 bg-gradient-to-br ${role.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}></div>
                     <div className="relative">
-                      <div className={`w-14 h-14 bg-gradient-to-br ${role.color} rounded-lg flex items-center justify-center mb-4 ${modalType === 'signup' ? 'mx-auto' : ''} group-hover:scale-110 transition-transform`}>
+                      <div className={`w-14 h-14 bg-gradient-to-br ${role.color} rounded-xl flex items-center justify-center mb-4 ${modalType === 'signup' ? 'mx-auto' : ''} group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-md`}>
                         <Icon className="w-7 h-7 text-white" />
                       </div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-1">{role.name}</h3>
-                      <p className="text-gray-600 text-sm">{role.description}</p>
+                      <h3 className={`text-xl font-bold text-gray-900 mb-1 ${modalType === 'signup' ? 'text-center' : ''}`}>
+                        {role.name}
+                      </h3>
+                      <p className={`text-gray-600 text-sm ${modalType === 'signup' ? 'text-center' : ''}`}>
+                        {role.description}
+                      </p>
                     </div>
                   </Link>
                 );
@@ -191,7 +211,7 @@ const Header = () => {
                 {modalType === 'signin' ? "Don't have an account? " : "Already have an account? "}
                 <button 
                   onClick={() => setModalType(modalType === 'signin' ? 'signup' : 'signin')}
-                  className="text-rose-500 hover:text-rose-600 font-semibold"
+                  className="text-rose-500 hover:text-rose-600 font-semibold hover:underline transition-all"
                 >
                   {modalType === 'signin' ? 'Sign Up' : 'Sign In'}
                 </button>

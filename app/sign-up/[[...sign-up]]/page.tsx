@@ -8,7 +8,7 @@ export default function SignUpPage() {
   const role = searchParams.get('role') || 'donor';
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50">
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 mt-30">
       <SignUp 
         appearance={{
           elements: {

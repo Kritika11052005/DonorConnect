@@ -34,7 +34,7 @@ export default function RootLayout({
       <html lang="en">
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
           <Header />
-          <main className="pt-16">
+          <main>
             {children}
             <Toaster 
           position="top-center" 

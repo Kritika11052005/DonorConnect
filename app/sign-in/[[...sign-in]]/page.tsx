@@ -8,7 +8,7 @@ export default function SignInPage() {
   const role = searchParams.get('role');
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50">
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 mt-30">
       <SignIn 
         appearance={{
           elements: {
