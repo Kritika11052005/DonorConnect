@@ -142,3 +142,51 @@
   background-size: 200% 200%;
   animation: gradientShift 8s ease infinite;
 }
+/* 🌸 Forcefully style DayPicker dropdowns (month + year) */
+.rdp-caption_dropdowns {
+  display: flex !important;
+  gap: 0.5rem !important;
+  margin-bottom: 1rem !important;
+}
+
+.rdp-caption_dropdowns select {
+  flex: 1 !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+
+  /* Visual styling */
+  background-color: #fff !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23f43f5e' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat !important;
+  background-position: right 0.75rem center !important;
+  background-size: 1rem !important;
+  padding: 0.5rem 2rem 0.5rem 0.75rem !important;
+
+  border: 2px solid #fecdd3 !important;
+  border-radius: 0.75rem !important;
+  font-weight: 500 !important;
+  font-family: inherit !important;
+  color: #1f2937 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Hover */
+.rdp-caption_dropdowns select:hover {
+  border-color: #f43f5e !important;
+  background-color: #fff5f7 !important;
+  box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.1) !important;
+}
+
+/* Focus */
+.rdp-caption_dropdowns select:focus {
+  outline: none !important;
+  border-color: #f43f5e !important;
+  box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.2) !important;
+}
+
+/* Hide the default icons */
+.rdp-dropdown_icon {
+  display: none !important;
+}

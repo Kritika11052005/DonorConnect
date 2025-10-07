@@ -1,7 +1,7 @@
 'use client';
 
-import { X, Calendar, Clock, MapPin, Droplet } from 'lucide-react';
-import { useState } from 'react';
+import { X, Calendar, Clock, MapPin, Droplet, AlertCircle, LogIn, AlertTriangle, CheckCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,9 +11,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { DayPicker } from 'react-day-picker';
-import { format } from 'date-fns';
+import { format, addDays } from 'date-fns';
 import 'react-day-picker/dist/style.css';
-import { useUser } from '@clerk/nextjs';
+import { useUser, useAuth, SignInButton } from '@clerk/nextjs';
 import { toast } from 'sonner';
 
 interface BloodDonationFormProps {
@@ -21,9 +21,13 @@ interface BloodDonationFormProps {
 }
 
 export default function BloodDonationForm({ onClose }: BloodDonationFormProps) {
-  const { user } = useUser();
+  const { user, isLoaded: isUserLoaded } = useUser();
+  const { isSignedIn } = useAuth();
   const hospitals = useQuery(api.hospitals.getAllVerifiedHospitals);
+  const existingAppointment = useQuery(api.bloodDonations.getUpcomingAppointment);
+  const lastCompletedDonation = useQuery(api.bloodDonations.getLastCompletedDonation);
   const createBloodDonationSignup = useMutation(api.bloodDonations.createBloodDonationSignup);
+  const cancelAppointment = useMutation(api.bloodDonations.cancelAppointment);
   
   const [formData, setFormData] = useState({
     lastDonationDate: undefined as Date | undefined,
@@ -40,9 +44,69 @@ export default function BloodDonationForm({ onClose }: BloodDonationFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showLastDonationCalendar, setShowLastDonationCalendar] = useState(false);
   const [showAppointmentCalendar, setShowAppointmentCalendar] = useState(false);
+  const [showExistingAppointmentWarning, setShowExistingAppointmentWarning] = useState(false);
+  const [actionChoice, setActionChoice] = useState<'cancel' | 'keep' | null>(null);
+  const [manuallyEditLastDonation, setManuallyEditLastDonation] = useState(false);
+  const [autoFilledLastDonation, setAutoFilledLastDonation] = useState(false);
+
+  // Auto-fill last donation date from database
+  useEffect(() => {
+    if (lastCompletedDonation && !manuallyEditLastDonation) {
+      // Use completedAt if available, otherwise fall back to scheduledDate
+      const dateToUse = lastCompletedDonation.completedAt || lastCompletedDonation.scheduledDate;
+      if (dateToUse) {
+        const lastDonationDate = new Date(dateToUse);
+        setFormData(prev => ({ ...prev, lastDonationDate }));
+        setAutoFilledLastDonation(true);
+      }
+    }
+  }, [lastCompletedDonation, manuallyEditLastDonation]);
+
+  // Check if user has existing appointment when form loads
+  useEffect(() => {
+    if (existingAppointment && formData.scheduleAppointment) {
+      setShowExistingAppointmentWarning(true);
+    }
+  }, [existingAppointment, formData.scheduleAppointment]);
+
+  // Calculate next eligible donation date (90 days after last donation)
+  const getNextEligibleDate = () => {
+    if (!formData.lastDonationDate) {
+      return new Date();
+    }
+    return addDays(formData.lastDonationDate, 90);
+  };
+
+  const nextEligibleDate = getNextEligibleDate();
+
+  const handleCancelExistingAppointment = async () => {
+    if (!existingAppointment) return;
+    
+    try {
+      await cancelAppointment({ appointmentId: existingAppointment._id });
+      toast.success('Previous appointment cancelled successfully');
+      setShowExistingAppointmentWarning(false);
+      setActionChoice('cancel');
+    } catch (error) {
+      toast.error('Failed to cancel previous appointment');
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!isSignedIn || !user) {
+      toast.error('Please sign in to complete blood donation signup');
+      return;
+    }
+
+    // Check if user wants to schedule but has existing appointment
+    if (formData.scheduleAppointment && existingAppointment && actionChoice !== 'cancel') {
+      setShowExistingAppointmentWarning(true);
+      toast.error('Please handle your existing appointment first');
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
@@ -76,9 +140,14 @@ export default function BloodDonationForm({ onClose }: BloodDonationFormProps) {
           setIsSubmitting(false);
           return;
         }
+
+        if (formData.lastDonationDate && formData.scheduledDate < nextEligibleDate) {
+          toast.error(`You must wait until ${format(nextEligibleDate, 'PPP')} (90 days after last donation)`);
+          setIsSubmitting(false);
+          return;
+        }
       }
 
-      // Submit to database
       await createBloodDonationSignup({
         lastDonationDate: formData.lastDonationDate?.getTime(),
         weight,
@@ -120,10 +189,148 @@ export default function BloodDonationForm({ onClose }: BloodDonationFormProps) {
   const threeMonthsAgo = new Date();
   threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
 
+  if (!isUserLoaded) {
+    return (
+      <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isSignedIn || !user) {
+    return (
+      <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+          <div className="bg-gradient-to-r from-rose-500 to-pink-500 px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                <AlertCircle className="w-6 h-6 text-white" />
+              </div>
+              <h2 className="text-xl font-bold text-white">Authentication Required</h2>
+            </div>
+            <button onClick={onClose} className="text-white/80 hover:text-white transition-colors">
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+
+          <div className="p-8 text-center space-y-6">
+            <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mx-auto">
+              <LogIn className="w-8 h-8 text-rose-500" />
+            </div>
+            
+            <div className="space-y-2">
+              <h3 className="text-xl font-bold text-gray-800">Sign in to Continue</h3>
+              <p className="text-gray-600">
+                You need to be signed in to sign up for blood donation. This helps us keep track of your donation history and appointments.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <SignInButton mode="modal">
+                <Button className="w-full bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white h-12 font-semibold">
+                  <LogIn className="w-5 h-5 mr-2" />
+                  Sign In
+                </Button>
+              </SignInButton>
+              
+              <Button variant="outline" onClick={onClose} className="w-full border-2 border-gray-300 text-gray-700 hover:bg-gray-50 h-12">
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Existing Appointment Warning Modal
+  if (showExistingAppointmentWarning && existingAppointment) {
+    return (
+      <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden">
+          <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-4 flex items-center gap-3">
+            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+              <AlertTriangle className="w-6 h-6 text-white" />
+            </div>
+            <h2 className="text-xl font-bold text-white">Existing Appointment Found</h2>
+          </div>
+
+          <div className="p-6 space-y-4">
+            <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded">
+              <p className="text-sm font-medium text-amber-800 mb-2">
+                You already have an upcoming appointment scheduled:
+              </p>
+              <div className="space-y-1 text-sm text-amber-700">
+                <p><strong>Hospital:</strong> {existingAppointment.hospital?.hospitalName}</p>
+                <p><strong>Date:</strong> {format(new Date(existingAppointment.scheduledDate), 'PPP')}</p>
+                <p><strong>Time:</strong> {existingAppointment.scheduledTime}</p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-gray-700 font-medium">What would you like to do?</p>
+              
+              <div className="space-y-2">
+                <button
+                  onClick={handleCancelExistingAppointment}
+                  className="w-full p-4 border-2 border-rose-200 rounded-lg hover:border-rose-400 hover:bg-rose-50 transition-all text-left"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-5 h-5 rounded-full border-2 border-rose-500 flex items-center justify-center mt-0.5">
+                      <div className={`w-2.5 h-2.5 rounded-full bg-rose-500 ${actionChoice === 'cancel' ? 'block' : 'hidden'}`}></div>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-800">Cancel & Reschedule</p>
+                      <p className="text-sm text-gray-600">Cancel the existing appointment and schedule a new one</p>
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setFormData({ ...formData, scheduleAppointment: false });
+                    setShowExistingAppointmentWarning(false);
+                    setActionChoice('keep');
+                  }}
+                  className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-gray-400 hover:bg-gray-50 transition-all text-left"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-5 h-5 rounded-full border-2 border-gray-500 flex items-center justify-center mt-0.5">
+                      <div className={`w-2.5 h-2.5 rounded-full bg-gray-500 ${actionChoice === 'keep' ? 'block' : 'hidden'}`}></div>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-800">Keep Existing Appointment</p>
+                      <p className="text-sm text-gray-600">Update your information without scheduling</p>
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-4 border-t">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowExistingAppointmentWarning(false);
+                  setFormData({ ...formData, scheduleAppointment: false });
+                }}
+                className="flex-1"
+              >
+                Go Back
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
       <div className="relative bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-        {/* Header */}
         <div className="bg-gradient-to-r from-rose-500 to-pink-500 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
@@ -131,39 +338,70 @@ export default function BloodDonationForm({ onClose }: BloodDonationFormProps) {
             </div>
             <h2 className="text-2xl font-bold text-white">Blood Donation Sign-Up</h2>
           </div>
-          <button
-            onClick={onClose}
-            className="text-white/80 hover:text-white transition-colors"
-          >
+          <button onClick={onClose} className="text-white/80 hover:text-white transition-colors">
             <X className="w-6 h-6" />
           </button>
         </div>
 
-        {/* Scrollable Form Content */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
+        <div className="bg-rose-50 px-6 py-3 border-b border-rose-100">
+          <p className="text-sm text-gray-700">
+            Signed in as <span className="font-semibold text-rose-600">{user.emailAddresses[0]?.emailAddress || user.firstName}</span>
+          </p>
+        </div>
+
+        <div className="flex-1 overflow-y-auto">
           <div className="p-6 space-y-6">
-            {/* Health Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-bold text-gray-800 border-b-2 border-rose-200 pb-2 flex items-center gap-2">
                 <Droplet className="w-5 h-5 text-rose-500" />
                 Health Information
               </h3>
 
-              {/* Last Donation Date with Calendar */}
               <div className="space-y-2">
                 <Label className="text-gray-700 font-semibold flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-rose-500" />
                   Last Donation Date
                 </Label>
+
+                {/* Auto-filled notification */}
+                {autoFilledLastDonation && !manuallyEditLastDonation && (
+                  <div className="mb-2 p-3 bg-green-50 border-l-4 border-green-400 rounded flex items-start gap-2">
+                    <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-green-800">
+                        Auto-filled from your donation history
+                      </p>
+                      <p className="text-xs text-green-700 mt-1">
+                        Last donation: {format(formData.lastDonationDate!, 'PPP')}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setManuallyEditLastDonation(true)}
+                      className="text-xs text-green-700 hover:text-green-900 font-medium underline"
+                    >
+                      Edit
+                    </button>
+                  </div>
+                )}
+
                 <div className="relative">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setShowLastDonationCalendar(!showLastDonationCalendar)}
-                    className="w-full justify-start text-left font-normal border-rose-200 hover:border-rose-500 h-11"
+                    disabled={autoFilledLastDonation && !manuallyEditLastDonation}
+                    className="w-full justify-start text-left font-normal border-rose-200 hover:border-rose-500 h-11 disabled:opacity-60"
                   >
                     {formData.lastDonationDate ? (
-                      format(formData.lastDonationDate, 'PPP')
+                      <span className="flex items-center gap-2">
+                        {format(formData.lastDonationDate, 'PPP')}
+                        {autoFilledLastDonation && !manuallyEditLastDonation && (
+                          <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                            Auto-filled
+                          </span>
+                        )}
+                      </span>
                     ) : (
                       <span className="text-gray-500">First-time donor? Leave blank</span>
                     )}
@@ -177,6 +415,7 @@ export default function BloodDonationForm({ onClose }: BloodDonationFormProps) {
                         onSelect={(date) => {
                           setFormData({ ...formData, lastDonationDate: date });
                           setShowLastDonationCalendar(false);
+                          setManuallyEditLastDonation(true);
                         }}
                         disabled={{ after: today, before: threeMonthsAgo }}
                         modifiersStyles={{
@@ -194,6 +433,8 @@ export default function BloodDonationForm({ onClose }: BloodDonationFormProps) {
                           onClick={() => {
                             setFormData({ ...formData, lastDonationDate: undefined });
                             setShowLastDonationCalendar(false);
+                            setManuallyEditLastDonation(true);
+                            setAutoFilledLastDonation(false);
                           }}
                           className="flex-1"
                         >
@@ -212,9 +453,18 @@ export default function BloodDonationForm({ onClose }: BloodDonationFormProps) {
                   )}
                 </div>
                 <p className="text-sm text-gray-500">Must be at least 3 months since last donation</p>
+                {formData.lastDonationDate && (
+                  <div className="mt-2 p-3 bg-amber-50 border-l-4 border-amber-400 rounded">
+                    <p className="text-sm font-medium text-amber-800">
+                      Next eligible donation date: <span className="font-bold">{format(nextEligibleDate, 'PPP')}</span>
+                    </p>
+                    <p className="text-xs text-amber-700 mt-1">
+                      You must wait 90 days between donations
+                    </p>
+                  </div>
+                )}
               </div>
 
-              {/* Weight */}
               <div className="space-y-2">
                 <Label htmlFor="weight" className="text-gray-700 font-semibold flex items-center gap-2">
                   Weight (kg) <span className="text-rose-500">*</span>
@@ -234,7 +484,6 @@ export default function BloodDonationForm({ onClose }: BloodDonationFormProps) {
                 <p className="text-xs text-rose-600 font-medium">Minimum: 45 kg required</p>
               </div>
 
-              {/* Available Days */}
               <div className="space-y-3">
                 <Label className="text-gray-700 font-semibold">Available Days for Donation</Label>
                 <div className="flex flex-wrap gap-2">
@@ -255,7 +504,6 @@ export default function BloodDonationForm({ onClose }: BloodDonationFormProps) {
                 </div>
               </div>
 
-              {/* Medical Conditions */}
               <div className="space-y-2">
                 <Label htmlFor="medical" className="text-gray-700 font-semibold">
                   Medical Conditions (if any)
@@ -271,15 +519,17 @@ export default function BloodDonationForm({ onClose }: BloodDonationFormProps) {
               </div>
             </div>
 
-            {/* Appointment Scheduling */}
             <div className="space-y-4 border-t-2 border-gray-200 pt-6">
               <div className="flex items-center space-x-3">
                 <Checkbox
                   id="scheduleAppointment"
                   checked={formData.scheduleAppointment}
-                  onCheckedChange={(checked) => 
-                    setFormData({ ...formData, scheduleAppointment: checked as boolean })
-                  }
+                  onCheckedChange={(checked) => {
+                    if (checked && existingAppointment) {
+                      setShowExistingAppointmentWarning(true);
+                    }
+                    setFormData({ ...formData, scheduleAppointment: checked as boolean });
+                  }}
                   className="border-rose-300 data-[state=checked]:bg-rose-500"
                 />
                 <Label 
@@ -293,7 +543,6 @@ export default function BloodDonationForm({ onClose }: BloodDonationFormProps) {
 
               {formData.scheduleAppointment && (
                 <div className="space-y-4 bg-rose-50/50 p-4 rounded-xl border-2 border-rose-100">
-                  {/* Hospital Selection */}
                   <div className="space-y-2">
                     <Label className="text-gray-700 font-semibold flex items-center gap-2">
                       <MapPin className="w-4 h-4 text-rose-500" />
@@ -321,7 +570,6 @@ export default function BloodDonationForm({ onClose }: BloodDonationFormProps) {
                     </Select>
                   </div>
 
-                  {/* Appointment Date with Calendar */}
                   <div className="space-y-2">
                     <Label className="text-gray-700 font-semibold flex items-center gap-2">
                       <Calendar className="w-4 h-4 text-rose-500" />
@@ -350,7 +598,7 @@ export default function BloodDonationForm({ onClose }: BloodDonationFormProps) {
                               setFormData({ ...formData, scheduledDate: date });
                               setShowAppointmentCalendar(false);
                             }}
-                            disabled={{ before: today }}
+                            disabled={{ before: nextEligibleDate }}
                             modifiersStyles={{
                               selected: {
                                 backgroundColor: '#f43f5e',
@@ -369,9 +617,13 @@ export default function BloodDonationForm({ onClose }: BloodDonationFormProps) {
                         </div>
                       )}
                     </div>
+                    {formData.lastDonationDate && (
+                      <p className="text-xs text-amber-600 font-medium">
+                        Appointments available from {format(nextEligibleDate, 'PPP')} onwards
+                      </p>
+                    )}
                   </div>
 
-                  {/* Time Slot */}
                   <div className="space-y-2">
                     <Label className="text-gray-700 font-semibold flex items-center gap-2">
                       <Clock className="w-4 h-4 text-rose-500" />
@@ -392,7 +644,6 @@ export default function BloodDonationForm({ onClose }: BloodDonationFormProps) {
                     </Select>
                   </div>
 
-                  {/* Appointment Notes */}
                   <div className="space-y-2">
                     <Label htmlFor="appointmentNotes" className="text-gray-700 font-semibold">
                       Additional Notes (Optional)
@@ -410,9 +661,8 @@ export default function BloodDonationForm({ onClose }: BloodDonationFormProps) {
               )}
             </div>
           </div>
-        </form>
+        </div>
 
-        {/* Fixed Footer */}
         <div className="border-t border-gray-200 p-6 bg-gray-50">
           <div className="flex gap-4">
             <Button
@@ -425,7 +675,7 @@ export default function BloodDonationForm({ onClose }: BloodDonationFormProps) {
               Cancel
             </Button>
             <Button
-              type="submit"
+              type="button"
               onClick={handleSubmit}
               disabled={isSubmitting}
               className="flex-1 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white shadow-md hover:shadow-lg h-12 font-semibold disabled:opacity-50"

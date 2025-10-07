@@ -4,7 +4,6 @@ import { ClerkProvider } from '@clerk/nextjs';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import "./globals.css";
-import { ConvexProvider } from "convex/react";
 import { ConvexClientProvider } from "@/components/ConvexClientProvider";
 import { Toaster } from 'sonner';
 
@@ -29,29 +28,28 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-  <ConvexClientProvider>
     <ClerkProvider>
-      <html lang="en">
-        <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-          <Header />
-          <main>
-            {children}
-            <Toaster 
-          position="top-center" 
-          richColors 
-          closeButton
-          toastOptions={{
-            style: {
-              background: 'white',
-            },
-          }}
-        />
-          </main>
-          <Footer />
-        </body>
-      </html>
+      <ConvexClientProvider>
+        <html lang="en">
+          <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+            <Header />
+            <main>
+              {children}
+              <Toaster 
+                position="top-center" 
+                richColors 
+                closeButton
+                toastOptions={{
+                  style: {
+                    background: 'white',
+                  },
+                }}
+              />
+            </main>
+            <Footer />
+          </body>
+        </html>
+      </ConvexClientProvider>
     </ClerkProvider>
-  </ConvexClientProvider>
-    
   );
 }

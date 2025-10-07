@@ -29,6 +29,11 @@ export default defineSchema({
       v.literal("O+"), v.literal("O-")
     )),
     dateOfBirth: v.optional(v.string()),
+    gender: v.optional(v.union(
+      v.literal("male"),
+      v.literal("female"),
+      v.literal("other")
+    )),
     isOrganDonor: v.boolean(),
     organDonorPledgeDate: v.optional(v.number()),
     availableForBloodDonation: v.boolean(),
@@ -37,7 +42,8 @@ export default defineSchema({
   })
     .index("by_userId", ["userId"])
     .index("by_bloodGroup", ["bloodGroup"])
-    .index("by_organDonor", ["isOrganDonor"]),
+    .index("by_organDonor", ["isOrganDonor"])
+    .index("by_gender", ["gender"]),
 
   // NGOs
   ngos: defineTable({
@@ -49,9 +55,18 @@ export default defineSchema({
     description: v.string(),
     verified: v.boolean(),
     categories: v.array(v.string()), // ["education", "health", "environment", etc.]
+    // NEW: Rating and popularity metrics
+    averageRating: v.optional(v.number()), // 0-5 stars
+    totalRatings: v.optional(v.number()), // Number of ratings received
+    totalDonationsReceived: v.optional(v.number()), // Count of donations
+    totalAmountRaised: v.optional(v.number()), // Total money raised
+    totalVolunteers: v.optional(v.number()), // Number of volunteers
+    popularityScore: v.optional(v.number()), // Calculated popularity metric
   })
     .index("by_userId", ["userId"])
-    .index("by_verified", ["verified"]),
+    .index("by_verified", ["verified"])
+    .index("by_popularityScore", ["popularityScore"])
+    .index("by_averageRating", ["averageRating"]),
 
   // NGO Fundraising Campaigns
   fundraisingCampaigns: defineTable({
@@ -65,9 +80,16 @@ export default defineSchema({
     category: v.string(),
     status: v.union(v.literal("active"), v.literal("completed"), v.literal("cancelled")),
     createdAt: v.number(),
+    // NEW: Rating and popularity
+    averageRating: v.optional(v.number()),
+    totalRatings: v.optional(v.number()),
+    totalDonors: v.optional(v.number()), // Number of unique donors
+    popularityScore: v.optional(v.number()),
   })
     .index("by_ngoId", ["ngoId"])
-    .index("by_status", ["status"]),
+    .index("by_status", ["status"])
+    .index("by_category", ["category"])
+    .index("by_popularityScore", ["popularityScore"]),
 
   // Volunteers
   volunteers: defineTable({
@@ -93,9 +115,17 @@ export default defineSchema({
     totalBeds: v.optional(v.number()),
     verified: v.boolean(),
     specializations: v.array(v.string()),
+    // NEW: Rating and popularity metrics
+    averageRating: v.optional(v.number()), // 0-5 stars
+    totalRatings: v.optional(v.number()),
+    totalBloodDonations: v.optional(v.number()), // Count of blood donations
+    totalOrganTransplants: v.optional(v.number()), // Count of organ transplants
+    popularityScore: v.optional(v.number()),
   })
     .index("by_userId", ["userId"])
-    .index("by_verified", ["verified"]),
+    .index("by_verified", ["verified"])
+    .index("by_popularityScore", ["popularityScore"])
+    .index("by_averageRating", ["averageRating"]),
 
   // Blood Donation Requests by Hospitals
   bloodDonationRequests: defineTable({
@@ -172,7 +202,6 @@ export default defineSchema({
     .index("by_status", ["status"]),
 
   // Hospital Organ Availability (Simplified tracking)
-  // NOTE: In real systems, organs are matched through national registries, not stored
   hospitalOrganAvailability: defineTable({
     hospitalId: v.id("hospitals"),
     organType: v.string(),
@@ -182,7 +211,7 @@ export default defineSchema({
       v.literal("AB+"), v.literal("AB-"),
       v.literal("O+"), v.literal("O-")
     ),
-    availableUntil: v.number(), // Timestamp when organ must be used by
+    availableUntil: v.number(),
     donorAge: v.optional(v.number()),
     status: v.union(v.literal("available"), v.literal("allocated"), v.literal("transplanted"), v.literal("expired")),
     notes: v.optional(v.string()),
@@ -205,9 +234,9 @@ export default defineSchema({
       v.literal("food"),
       v.literal("medical_supplies")
     ),
-    amount: v.optional(v.number()), // For money donations
-    quantity: v.optional(v.number()), // For physical items
-    unit: v.optional(v.string()), // "kg", "pieces", "boxes", etc.
+    amount: v.optional(v.number()),
+    quantity: v.optional(v.number()),
+    unit: v.optional(v.string()),
     description: v.optional(v.string()),
     donationDate: v.number(),
     pickupScheduled: v.optional(v.boolean()),
@@ -219,7 +248,7 @@ export default defineSchema({
       v.literal("completed"),
       v.literal("cancelled")
     ),
-    paymentId: v.optional(v.string()), // Payment gateway transaction ID
+    paymentId: v.optional(v.string()),
     taxReceiptGenerated: v.boolean(),
     taxReceiptUrl: v.optional(v.string()),
     createdAt: v.number(),
@@ -227,7 +256,41 @@ export default defineSchema({
     .index("by_donorId", ["donorId"])
     .index("by_ngoId", ["ngoId"])
     .index("by_donationType", ["donationType"])
-    .index("by_status", ["status"]),
+    .index("by_status", ["status"])
+    .index("by_campaignId", ["campaignId"]),
+
+  // Ratings for hospitals
+  hospitalRatings: defineTable({
+    hospitalId: v.id("hospitals"),
+    userId: v.id("users"),
+    rating: v.number(), // 1-5 stars
+    review: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_hospitalId", ["hospitalId"])
+    .index("by_userId", ["userId"]),
+
+  // Ratings for NGOs
+  ngoRatings: defineTable({
+    ngoId: v.id("ngos"),
+    userId: v.id("users"),
+    rating: v.number(),
+    review: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_ngoId", ["ngoId"])
+    .index("by_userId", ["userId"]),
+
+  // Ratings for campaigns
+  campaignRatings: defineTable({
+    campaignId: v.id("fundraisingCampaigns"),
+    userId: v.id("users"),
+    rating: v.number(),
+    review: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_campaignId", ["campaignId"])
+    .index("by_userId", ["userId"]),
 
   // Tax Receipts (80G Certificates)
   taxReceipts: defineTable({
