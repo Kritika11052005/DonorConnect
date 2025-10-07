@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserButton, useUser } from '@clerk/nextjs';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -9,6 +9,19 @@ const Header = () => {
   const { isSignedIn } = useUser();
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState<'signin' | 'signup'>('signup');
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const isScrolled = window.scrollY > 10;
+      if (isScrolled !== scrolled) {
+        setScrolled(isScrolled);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [scrolled]);
 
   const openSignIn = () => {
     setModalType('signin');
@@ -63,7 +76,11 @@ const Header = () => {
   return (
     <>
       <header 
-        className="fixed top-0 left-0 right-0 w-full z-50 bg-transparent backdrop-blur-sm"
+        className={`fixed top-0 left-0 right-0 w-full z-50 transition-all duration-300 ${
+          scrolled 
+            ? 'bg-[#1a2332]/70 backdrop-blur-lg shadow-lg' 
+            : 'header-gradient'
+        }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -93,7 +110,7 @@ const Header = () => {
                 <>
                   <button 
                     onClick={openSignIn}
-                    className="px-4 py-2 text-gray-700 font-medium hover:text-rose-500 transition-colors"
+                    className="px-4 py-2 font-medium transition-colors text-white hover:text-pink-200"
                   >
                     Sign In
                   </button>
