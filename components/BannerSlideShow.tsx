@@ -3,11 +3,26 @@
 import { useRef, useEffect, useState } from "react";
 import { gsap } from "gsap";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 export default function BannerSlideShow() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const slideRefs = useRef<(HTMLDivElement | null)[]>([]);
   const isAnimating = useRef(false);
+  const { isSignedIn, user } = useUser();
+  const router = useRouter();
+
+  // Get user data from Convex
+  const userData = useQuery(
+    api.users.getUserByClerkId,
+    isSignedIn && user ? { clerkId: user.id } : "skip"
+  );
+
+  const userRole = userData?.role;
 
   // Your banner images from public folder
   const banners = [
@@ -19,14 +34,13 @@ export default function BannerSlideShow() {
   ];
 
   // GSAP animation for slide transitions
-  const animateSlide = (fromIndex:number, toIndex:number) => {
+  const animateSlide = (fromIndex: number, toIndex: number) => {
     if (isAnimating.current) return;
     isAnimating.current = true;
 
     const currentSlideEl = slideRefs.current[fromIndex];
     const nextSlideEl = slideRefs.current[toIndex];
 
-    // Create timeline for smooth transition
     const tl = gsap.timeline({
       onComplete: () => {
         isAnimating.current = false;
@@ -67,7 +81,7 @@ export default function BannerSlideShow() {
     });
   }, []);
 
-  const goToSlide = (index:number) => {
+  const goToSlide = (index: number) => {
     if (index !== currentSlide && !isAnimating.current) {
       animateSlide(currentSlide, index);
       setCurrentSlide(index);
@@ -84,15 +98,95 @@ export default function BannerSlideShow() {
     goToSlide(nextIndex);
   };
 
+  // Handle banner click navigation
+  const handleBannerClick = (index: number) => {
+    // Banner 1 (index 1) - Sign Up
+    if (index === 1) {
+      if (!isSignedIn) {
+        router.push('/sign-up');
+      } else {
+        // User is signed in, check role
+        if (userRole === 'hospital') {
+          router.push('/dashboard/hospital');
+        } else if (userRole === 'ngo') {
+          router.push('/dashboard/ngo');
+        } else if (userRole === 'donor') {
+          toast.error('Sign up as a Hospital or NGO', {
+            description: 'This feature is only available for hospitals and NGOs'
+          });
+        } else {
+          router.push('/sign-up');
+        }
+      }
+    }
+    
+    // Banner 2 (index 0) - Homepage
+    else if (index === 0) {
+      router.push('/');
+    }
+    
+    // Banner 3 (index 2) - Blood Donation
+    else if (index === 2) {
+      if (!isSignedIn) {
+        router.push('/sign-in');
+      } else {
+        if (userRole === 'donor') {
+          router.push('/dashboard/donor');
+        } else if (userRole === 'hospital') {
+          toast.error('Sign in as a Donor or NGO', {
+            description: 'This feature is only available for donors and NGOs'
+          });
+        } else if (userRole === 'ngo') {
+          toast.info('Page Under Development', {
+            description: 'This feature will be available soon'
+          });
+        } else {
+          router.push('/sign-in');
+        }
+      }
+    }
+    
+    // Banner 4 (index 3) - Donor Feature
+    else if (index === 3) {
+      if (!isSignedIn) {
+        router.push('/sign-in');
+      } else {
+        if (userRole === 'donor') {
+          router.push('/dashboard/donor');
+        } else {
+          toast.error('Sign in as a Donor', {
+            description: 'This feature is only available for donors'
+          });
+        }
+      }
+    }
+    
+    // Banner 5 (index 4) - Donor Feature (same as Banner 4)
+    else if (index === 4) {
+      if (!isSignedIn) {
+        router.push('/sign-in');
+      } else {
+        if (userRole === 'donor') {
+          router.push('/dashboard/donor');
+        } else {
+          toast.error('Sign in as a Donor', {
+            description: 'This feature is only available for donors'
+          });
+        }
+      }
+    }
+  };
+
   return (
-    <section className="relative h-[90vh] w-full overflow-hidden ">
+    <section className="relative h-[100vh] w-full overflow-hidden">
       {/* Slides Container */}
       <div className="relative w-full h-full">
         {banners.map((banner, index) => (
           <div
             key={index}
             ref={(el) => { slideRefs.current[index] = el; }}
-            className="absolute inset-0 w-full h-full"
+            className="absolute inset-0 w-full h-full cursor-pointer"
+            onClick={() => handleBannerClick(index)}
           >
             <img
               src={banner}
@@ -105,7 +199,10 @@ export default function BannerSlideShow() {
 
       {/* Navigation Arrows */}
       <button
-        onClick={goToPrevious}
+        onClick={(e) => {
+          e.stopPropagation();
+          goToPrevious();
+        }}
         className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white/30 hover:bg-white/50 backdrop-blur-sm p-3 rounded-full transition-all"
         aria-label="Previous slide"
       >
@@ -113,7 +210,10 @@ export default function BannerSlideShow() {
       </button>
 
       <button
-        onClick={goToNext}
+        onClick={(e) => {
+          e.stopPropagation();
+          goToNext();
+        }}
         className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-white/30 hover:bg-white/50 backdrop-blur-sm p-3 rounded-full transition-all"
         aria-label="Next slide"
       >
@@ -125,7 +225,10 @@ export default function BannerSlideShow() {
         {banners.map((_, index) => (
           <button
             key={index}
-            onClick={() => goToSlide(index)}
+            onClick={(e) => {
+              e.stopPropagation();
+              goToSlide(index);
+            }}
             className={`w-3 h-3 rounded-full transition-all ${
               index === currentSlide
                 ? 'bg-white w-8'

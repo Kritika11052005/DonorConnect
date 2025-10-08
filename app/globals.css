@@ -190,3 +190,29 @@
 .rdp-dropdown_icon {
   display: none !important;
 }
+
+/* Loading Component Animations */
+@keyframes slide-right {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-slide-right {
+  animation: slide-right 1.5s ease-in-out infinite;
+}
+
+.animation-delay-150 {
+  animation-delay: 150ms;
+}
+
+.animation-delay-200 {
+  animation-delay: 200ms;
+}
+
+.animation-delay-400 {
+  animation-delay: 400ms;
+}

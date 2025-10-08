@@ -140,7 +140,7 @@ const Header = () => {
                   afterSignOutUrl="/"
                   appearance={{
                     elements: {
-                      avatarBox: "w-10 h-10 ring-2 ring-rose-500/20 hover:ring-rose-500/40 transition-all"
+                      avatarBox: "w-50 h-50 ring-2 ring-rose-500/20 hover:ring-rose-500/40 transition-all"
                     }
                   }}
                 />

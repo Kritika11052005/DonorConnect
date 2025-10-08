@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import "./globals.css";
 import { ConvexClientProvider } from "@/components/ConvexClientProvider";
 import { Toaster } from 'sonner';
+import ClientLayout from "@/components/ClientComponent";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,6 +28,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+   
   return (
     <ClerkProvider>
       <ConvexClientProvider>
@@ -34,7 +36,10 @@ export default function RootLayout({
           <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
             <Header />
             <main>
-              {children}
+              <ClientLayout>
+                {children}
+                </ClientLayout>
+              
               <Toaster 
                 position="top-center" 
                 richColors 
