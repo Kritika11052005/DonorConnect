@@ -1,7 +1,7 @@
 'use client';
 
 import { useUser } from '@clerk/nextjs';
-import { Droplet, Heart, Users, Search, TrendingUp, Award, Activity, CheckCircle2, Filter, Building2, HandHeart, Target, Loader2 } from 'lucide-react';
+import { Droplet, Heart, Users, Search, TrendingUp, Award, Activity, CheckCircle2, Filter, Building2, HandHeart, Target, Loader2, Edit } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import BloodDonationForm from '@/components/BloodDonationForm';
 import VolunteerForm from '@/components/VolunteerForm';
@@ -40,10 +40,12 @@ export default function UserDashboard() {
   );
   
   const [showForm, setShowForm] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   useEffect(() => {
     if (profileCheck && !profileCheck.complete) {
       setShowForm(true);
+      setIsEditMode(false);
     }
   }, [profileCheck]);
 
@@ -55,13 +57,11 @@ export default function UserDashboard() {
   // Get appropriate sortBy value based on active tab
   const getValidSortBy = () => {
     if (activeTab === 'campaigns') {
-      // For campaigns, 'name' is not valid, default to 'popular'
       if (filters.sortBy === 'name') {
         return 'popular';
       }
       return filters.sortBy as 'popular' | 'rating' | 'recent' | 'ending_soon' | 'amount_raised';
     }
-    // For hospitals and NGOs, use as is
     return filters.sortBy as 'popular' | 'rating' | 'recent' | 'name';
   };
 
@@ -142,9 +142,13 @@ export default function UserDashboard() {
   };
 
   const handleViewDetails = (id: string) => {
-    // TODO: Navigate to details page
     console.log('View details for:', id);
     toast.info('Details page coming soon!');
+  };
+
+  const handleEditProfile = () => {
+    setIsEditMode(true);
+    setShowForm(true);
   };
 
   const activeResults = 
@@ -221,7 +225,21 @@ export default function UserDashboard() {
       {showForm && profileCheck?.user && (
         <DonorProfileForm
           userId={profileCheck.user._id}
-          onComplete={() => setShowForm(false)}
+          onComplete={() => {
+            setShowForm(false);
+            setIsEditMode(false);
+          }}
+          isEditMode={isEditMode}
+          existingData={isEditMode && profileCheck ? {
+            phoneNumber: profileCheck.user.phoneNumber || '',
+            address: profileCheck.user.address || '',
+            city: profileCheck.user.city || '',
+            state: profileCheck.user.state || '',
+            pincode: profileCheck.user.pincode || '',
+            bloodGroup: profileCheck.donor?.bloodGroup || '',
+            gender: profileCheck.donor?.gender || '',
+            dateOfBirth: profileCheck.donor?.dateOfBirth || '',
+          } : undefined}
         />
       )}
 
@@ -231,14 +249,30 @@ export default function UserDashboard() {
           <div className="mb-12">
             <div className="bg-white rounded-3xl shadow-xl p-8 border border-gray-100">
               <div className="flex items-center justify-between mb-6">
-                <div>
+                <div className="flex items-start justify-between mb-6">
+                <div className="flex-1 pr-6">
                   <h1 className="text-4xl font-bold bg-gradient-to-r from-rose-500 to-pink-500 bg-clip-text text-transparent mb-2">
                     Welcome back, {user?.firstName || 'Donor'}!
                   </h1>
-                  <p className="text-lg text-gray-600">
-                    Ready to make a difference today?
+                  <p className="text-lg text-gray-600 ml-auto">
+                    {profileCheck?.user?.city && profileCheck?.user?.state 
+                      ? `${profileCheck.user.city}, ${profileCheck.user.state}`
+                      : 'Ready to make a difference today?'}
                   </p>
                 </div>
+                <div className="flex items-center gap-5">
+                  {profileCheck?.complete && (
+                    <button
+                      onClick={handleEditProfile}
+                      className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border-2 border-gray-200 rounded-xl hover:bg-gray-50 hover:border-rose-300 hover:text-rose-600 transition-all shadow-sm hover:shadow-md"
+                    >
+                      <Edit className="w-4 h-4" />
+                      Edit Profile
+                    </button>
+                  )}
+                  
+                </div>
+              </div>
                 <Activity className="w-12 h-12 text-rose-500 animate-pulse" />
               </div>
 
@@ -278,7 +312,6 @@ export default function UserDashboard() {
               const Icon = card.icon;
               const hasActiveStatus = card.hasAppointment;
               
-              // Get specific details based on card type
               let statusDetails = null;
               if (hasActiveStatus) {
                 if (card.id === 'blood' && upcomingAppointment) {
@@ -319,11 +352,9 @@ export default function UserDashboard() {
                   onClick={() => setActiveForm(card.id as any)}
                   className="group relative bg-white rounded-3xl p-8 border-2 border-gray-100 hover:border-transparent transition-all transform hover:scale-105 hover:shadow-2xl text-left overflow-hidden"
                 >
-                  {/* Gradient Background on Hover */}
                   <div className={`absolute inset-0 bg-gradient-to-br ${card.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
                   
                   <div className="relative">
-                    {/* Icon with Status Badge */}
                     <div className="relative mb-6 w-fit">
                       <div className={`w-16 h-16 bg-gradient-to-br ${card.gradient} rounded-2xl flex items-center justify-center shadow-lg ${card.shadowColor} group-hover:shadow-xl group-hover:scale-110 transition-all duration-300`}>
                         <Icon className="w-8 h-8 text-white" />
@@ -335,22 +366,18 @@ export default function UserDashboard() {
                       )}
                     </div>
                     
-                    {/* Content */}
                     <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-gray-700 transition-colors">
                       {card.title}
                     </h3>
                     
-                    {/* Show description only if no active status */}
                     {!hasActiveStatus && (
                       <p className="text-gray-600 text-base leading-relaxed mb-4">
                         {card.description}
                       </p>
                     )}
 
-                    {/* Status Details */}
                     {statusDetails}
 
-                    {/* Arrow Indicator */}
                     <div className="mt-6 flex items-center text-rose-500 font-semibold group-hover:translate-x-2 transition-transform">
                       {hasActiveStatus ? 'View Details' : 'Get Started'}
                       <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -394,7 +421,6 @@ export default function UserDashboard() {
               Discover trusted organizations and healthcare institutions in your area
             </p>
 
-            {/* Search Bar and Tabs */}
             <div className="flex flex-col gap-4 mb-6">
               <div className="flex flex-col md:flex-row gap-4">
                 <div className="flex-1 relative">
@@ -408,14 +434,13 @@ export default function UserDashboard() {
                   />
                 </div>
                 <Button 
-                  onClick={() => {/* Search is automatic */}}
+                  onClick={() => {}}
                   className="bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 h-14 px-10 text-base font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all"
                 >
                   Search
                 </Button>
               </div>
 
-              {/* Tabs */}
               <div className="flex gap-2 border-b border-gray-200">
                 {[
                   { id: 'ngos', label: 'NGOs', icon: HandHeart },
@@ -441,7 +466,6 @@ export default function UserDashboard() {
               </div>
             </div>
 
-            {/* Filters Panel */}
             {showFilters && (
               <FilterPanel
                 activeTab={activeTab}
@@ -453,14 +477,12 @@ export default function UserDashboard() {
               />
             )}
 
-            {/* Results Count */}
             <div className="mb-4 flex items-center justify-between">
               <p className="text-sm text-gray-600">
                 Found <span className="font-bold text-rose-500">{resultCount}</span> {activeTab}
               </p>
             </div>
 
-            {/* Results Display */}
             <div className="space-y-4 mb-8 max-h-[600px] overflow-y-auto pr-2">
               {activeResults && activeResults.results.length > 0 ? (
                 activeResults.results.map((result: any) => (
@@ -488,7 +510,6 @@ export default function UserDashboard() {
               )}
             </div>
 
-            {/* Popular Causes */}
             {popularCauses && popularCauses.length > 0 && (
               <div className="mt-8 pt-6 border-t border-gray-200">
                 <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-4">
@@ -514,7 +535,6 @@ export default function UserDashboard() {
           </div>
         </div>
 
-        {/* Forms Modal */}
         {activeForm === 'blood' && (
           <BloodDonationForm onClose={() => setActiveForm(null)} />
         )}

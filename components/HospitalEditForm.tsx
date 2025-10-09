@@ -1,9 +1,9 @@
-// Hospital Edit Form Component
 import React, { useState } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../convex/_generated/api';
-import { Building2, Heart, Activity, Users, Search, AlertCircle, MapPin, Star, Filter, Plus, Edit2, X, ChevronDown } from 'lucide-react';
-import { format } from 'date-fns';
+import { X } from 'lucide-react';
+import { toast } from 'sonner';
+
 export default function HospitalEditForm({ hospital, onComplete, onCancel }: { hospital: any; onComplete: () => void; onCancel: () => void }) {
   const updateHospital = useMutation(api.hospitals.updateHospitalProfile);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,9 +44,14 @@ export default function HospitalEditForm({ hospital, onComplete, onCancel }: { h
         state: formData.state,
         pincode: formData.pincode,
       });
+      toast.success('Profile Updated!', {
+        description: 'Your hospital profile has been updated successfully.',
+      });
       onComplete();
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'Failed to update hospital profile');
+      toast.error('Update Failed', {
+        description: error instanceof Error ? error.message : 'Failed to update hospital profile',
+      });
     } finally {
       setIsSubmitting(false);
     }

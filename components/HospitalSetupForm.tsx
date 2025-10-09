@@ -1,9 +1,9 @@
-// Hospital Setup Form Component
 import React, { useState } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../convex/_generated/api';
-import { Building2, Heart, Activity, Users, Search, AlertCircle, MapPin, Star, Filter, Plus, Edit2, X, ChevronDown } from 'lucide-react';
-import { format } from 'date-fns';
+import { Building2 } from 'lucide-react';
+import { toast } from 'sonner';
+
 export default function HospitalSetupForm({ onComplete }: { onComplete: () => void }) {
   const createHospital = useMutation(api.hospitals.createHospitalProfile);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -46,9 +46,14 @@ export default function HospitalSetupForm({ onComplete }: { onComplete: () => vo
           state: formData.state,
           pincode: formData.pincode,
         });
+        toast.success('Hospital Profile Created!', {
+          description: 'Your hospital profile has been created successfully.',
+        });
         onComplete();
       } catch (error) {
-        alert(error instanceof Error ? error.message : 'Failed to create hospital profile');
+        toast.error('Failed to Create Profile', {
+          description: error instanceof Error ? error.message : 'Please try again.',
+        });
       } finally {
         setIsSubmitting(false);
       }
