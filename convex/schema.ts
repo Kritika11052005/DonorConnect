@@ -183,23 +183,25 @@ export default defineSchema({
 
   // Organ Transplant Requests
   organTransplantRequests: defineTable({
-    hospitalId: v.id("hospitals"),
-    organType: v.string(),
-    patientBloodGroup: v.union(
-      v.literal("A+"), v.literal("A-"),
-      v.literal("B+"), v.literal("B-"),
-      v.literal("AB+"), v.literal("AB-"),
-      v.literal("O+"), v.literal("O-")
-    ),
-    urgency: v.union(v.literal("critical"), v.literal("urgent"), v.literal("normal")),
-    patientAge: v.number(),
-    additionalDetails: v.optional(v.string()),
-    status: v.union(v.literal("open"), v.literal("matched"), v.literal("completed"), v.literal("cancelled")),
-    createdAt: v.number(),
-  })
-    .index("by_hospitalId", ["hospitalId"])
-    .index("by_organType", ["organType"])
-    .index("by_status", ["status"]),
+  hospitalId: v.id("hospitals"),
+  organType: v.string(),
+  patientBloodGroup: v.union(
+    v.literal("A+"), v.literal("A-"),
+    v.literal("B+"), v.literal("B-"),
+    v.literal("AB+"), v.literal("AB-"),
+    v.literal("O+"), v.literal("O-")
+  ),
+  urgency: v.union(v.literal("critical"), v.literal("urgent"), v.literal("normal")),
+  patientAge: v.number(),
+  additionalDetails: v.optional(v.string()),
+  targetHospitalId: v.optional(v.id("hospitals")), // NEW: Specific target hospital or broadcast to all
+  status: v.union(v.literal("open"), v.literal("matched"), v.literal("completed"), v.literal("cancelled")),
+  createdAt: v.number(),
+})
+  .index("by_hospitalId", ["hospitalId"])
+  .index("by_organType", ["organType"])
+  .index("by_status", ["status"])
+  .index("by_targetHospitalId", ["targetHospitalId"]),
 
   // Hospital Organ Availability (Simplified tracking)
   hospitalOrganAvailability: defineTable({
