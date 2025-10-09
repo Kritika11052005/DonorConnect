@@ -204,25 +204,34 @@ export default defineSchema({
   .index("by_targetHospitalId", ["targetHospitalId"]),
 
   // Hospital Organ Availability (Simplified tracking)
-  hospitalOrganAvailability: defineTable({
-    hospitalId: v.id("hospitals"),
-    organType: v.string(),
-    bloodGroup: v.union(
-      v.literal("A+"), v.literal("A-"),
-      v.literal("B+"), v.literal("B-"),
-      v.literal("AB+"), v.literal("AB-"),
-      v.literal("O+"), v.literal("O-")
-    ),
-    availableUntil: v.number(),
-    donorAge: v.optional(v.number()),
-    status: v.union(v.literal("available"), v.literal("allocated"), v.literal("transplanted"), v.literal("expired")),
-    notes: v.optional(v.string()),
-    createdAt: v.number(),
-  })
-    .index("by_hospitalId", ["hospitalId"])
-    .index("by_organType", ["organType"])
-    .index("by_status", ["status"])
-    .index("by_bloodGroup", ["bloodGroup"]),
+  // Add this to your schema.ts file - UPDATE for hospitalOrganAvailability table
+
+hospitalOrganAvailability: defineTable({
+  hospitalId: v.id("hospitals"),
+  organType: v.string(),
+  bloodGroup: v.union(
+    v.literal("A+"), v.literal("A-"),
+    v.literal("B+"), v.literal("B-"),
+    v.literal("AB+"), v.literal("AB-"),
+    v.literal("O+"), v.literal("O-")
+  ),
+  quantity: v.optional(v.number()), // NEW: Track quantity
+  availableUntil: v.number(),
+  donorAge: v.optional(v.number()),
+  status: v.union(
+    v.literal("available"), 
+    v.literal("allocated"), 
+    v.literal("transplanted"), 
+    v.literal("expired")
+  ),
+  notes: v.optional(v.string()),
+  createdAt: v.number(),
+  updatedAt: v.optional(v.number()), // NEW: Track updates
+})
+  .index("by_hospitalId", ["hospitalId"])
+  .index("by_organType", ["organType"])
+  .index("by_status", ["status"])
+  .index("by_bloodGroup", ["bloodGroup"]),
 
   // Donations (Money, Clothes, Books, etc.)
   donations: defineTable({

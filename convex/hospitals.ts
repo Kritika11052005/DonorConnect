@@ -581,3 +581,416 @@ export const createOrganTransplantRequest = mutation({
     return requestId;
   },
 });
+export const getDetailedOrganAvailability = query({
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      return [];
+    }
+
+    const hospital = await ctx.db
+      .query("hospitals")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .unique();
+
+    if (!hospital) {
+      return [];
+    }
+
+    const organs = await ctx.db
+      .query("hospitalOrganAvailability")
+      .withIndex("by_hospitalId", (q) => q.eq("hospitalId", hospital._id))
+      .collect();
+
+    // Group by organ type and blood group
+    const organMap = new Map();
+    
+    organs.forEach((organ) => {
+      const key = `${organ.organType}-${organ.bloodGroup}`;
+      if (!organMap.has(key)) {
+        organMap.set(key, {
+          organType: organ.organType,
+          bloodGroup: organ.bloodGroup,
+          available: 0,
+          allocated: 0,
+          transplanted: 0,
+          expired: 0,
+          records: []
+        });
+      }
+      
+      const group = organMap.get(key);
+      const qty = organ.quantity || 1;
+      
+      if (organ.status === "available") group.available += qty;
+      else if (organ.status === "allocated") group.allocated += qty;
+      else if (organ.status === "transplanted") group.transplanted += qty;
+      else if (organ.status === "expired") group.expired += qty;
+      
+      group.records.push(organ);
+    });
+
+    return Array.from(organMap.values());
+  },
+});
+
+// Add new organ availability
+export const addOrganAvailability = mutation({
+  args: {
+    organType: v.string(),
+    bloodGroup: v.union(
+      v.literal("A+"), v.literal("A-"),
+      v.literal("B+"), v.literal("B-"),
+      v.literal("AB+"), v.literal("AB-"),
+      v.literal("O+"), v.literal("O-")
+    ),
+    quantity: v.number(),
+    availableUntil: v.number(),
+    donorAge: v.optional(v.number()),
+    notes: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const hospital = await ctx.db
+      .query("hospitals")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .unique();
+
+    if (!hospital) {
+      throw new Error("Hospital profile not found");
+    }
+
+    const organId = await ctx.db.insert("hospitalOrganAvailability", {
+      hospitalId: hospital._id,
+      organType: args.organType,
+      bloodGroup: args.bloodGroup,
+      quantity: args.quantity,
+      availableUntil: args.availableUntil,
+      donorAge: args.donorAge,
+      status: "available",
+      notes: args.notes,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+
+    return organId;
+  },
+});
+
+// Update organ availability
+export const updateOrganAvailability = mutation({
+  args: {
+    organId: v.id("hospitalOrganAvailability"),
+    quantity: v.optional(v.number()),
+    availableUntil: v.optional(v.number()),
+    status: v.optional(v.union(
+      v.literal("available"),
+      v.literal("allocated"),
+      v.literal("transplanted"),
+      v.literal("expired")
+    )),
+    notes: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const organ = await ctx.db.get(args.organId);
+    if (!organ) {
+      throw new Error("Organ record not found");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const hospital = await ctx.db
+      .query("hospitals")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .unique();
+
+    if (!hospital || organ.hospitalId !== hospital._id) {
+      throw new Error("Unauthorized");
+    }
+
+    const updates: any = { updatedAt: Date.now() };
+    if (args.quantity !== undefined) updates.quantity = args.quantity;
+    if (args.availableUntil) updates.availableUntil = args.availableUntil;
+    if (args.status) updates.status = args.status;
+    if (args.notes !== undefined) updates.notes = args.notes;
+
+    await ctx.db.patch(args.organId, updates);
+
+    return args.organId;
+  },
+});
+
+// Delete organ availability record
+export const deleteOrganAvailability = mutation({
+  args: {
+    organId: v.id("hospitalOrganAvailability"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const organ = await ctx.db.get(args.organId);
+    if (!organ) {
+      throw new Error("Organ record not found");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const hospital = await ctx.db
+      .query("hospitals")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .unique();
+
+    if (!hospital || organ.hospitalId !== hospital._id) {
+      throw new Error("Unauthorized");
+    }
+
+    await ctx.db.delete(args.organId);
+    return true;
+  },
+});
+// Add these to your convex/hospitals.ts file
+
+// Accept an organ transplant request
+export const acceptOrganRequest = mutation({
+  args: {
+    requestId: v.id("organTransplantRequests"),
+    message: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const hospital = await ctx.db
+      .query("hospitals")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .unique();
+
+    if (!hospital) {
+      throw new Error("Hospital profile not found");
+    }
+
+    const request = await ctx.db.get(args.requestId);
+    if (!request) {
+      throw new Error("Request not found");
+    }
+
+    if (request.status !== "open") {
+      throw new Error("This request is no longer open");
+    }
+
+    // Update request status to matched
+    await ctx.db.patch(args.requestId, {
+      status: "matched",
+    });
+
+    // Get requesting hospital details for notification
+    const requestingHospital = await ctx.db.get(request.hospitalId);
+    if (requestingHospital) {
+      const requestingUser = await ctx.db.get(requestingHospital.userId);
+      
+      // Create notification for requesting hospital
+      if (requestingUser) {
+        await ctx.db.insert("notifications", {
+          userId: requestingUser._id,
+          title: "Organ Request Accepted! 🎉",
+          message: `${hospital.hospitalName} has accepted your ${request.organType} request for ${request.patientBloodGroup} blood group. ${args.message ? 'Message: ' + args.message : 'They will contact you soon.'}`,
+          type: "organ_donation",
+          read: false,
+          createdAt: Date.now(),
+        });
+      }
+    }
+
+    // Create notification for accepting hospital
+    await ctx.db.insert("notifications", {
+      userId: user._id,
+      title: "Request Accepted",
+      message: `You have accepted an organ transplant request for ${request.organType} (${request.patientBloodGroup}).`,
+      type: "organ_donation",
+      read: false,
+      createdAt: Date.now(),
+    });
+
+    return args.requestId;
+  },
+});
+
+// Get detailed incoming requests with hospital contact info
+export const getDetailedIncomingRequests = query({
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      return [];
+    }
+
+    const hospital = await ctx.db
+      .query("hospitals")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .unique();
+
+    if (!hospital) {
+      return [];
+    }
+
+    // Get available organs at this hospital
+    const availableOrgans = await ctx.db
+      .query("hospitalOrganAvailability")
+      .withIndex("by_hospitalId", (q) => q.eq("hospitalId", hospital._id))
+      .filter((q) => q.eq(q.field("status"), "available"))
+      .collect();
+
+    // Get all open requests from other hospitals
+    const allRequests = await ctx.db
+      .query("organTransplantRequests")
+      .withIndex("by_status", (q) => q.eq("status", "open"))
+      .collect();
+
+    // Filter requests that match available organs
+    const matchingRequests = await Promise.all(
+      allRequests
+        .filter((request) => request.hospitalId !== hospital._id)
+        .filter((request) =>
+          availableOrgans.some(
+            (organ) =>
+              organ.organType === request.organType &&
+              organ.bloodGroup === request.patientBloodGroup
+          )
+        )
+        .map(async (request) => {
+          const requestingHospital = await ctx.db.get(request.hospitalId);
+          const requestingUser = requestingHospital
+            ? await ctx.db.get(requestingHospital.userId)
+            : null;
+          
+          return {
+            ...request,
+            requestingHospital,
+            requestingUser,
+          };
+        })
+    );
+
+    return matchingRequests;
+  },
+});
+
+// Reject an organ transplant request
+export const rejectOrganRequest = mutation({
+  args: {
+    requestId: v.id("organTransplantRequests"),
+    reason: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const hospital = await ctx.db
+      .query("hospitals")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .unique();
+
+    if (!hospital) {
+      throw new Error("Hospital profile not found");
+    }
+
+    const request = await ctx.db.get(args.requestId);
+    if (!request) {
+      throw new Error("Request not found");
+    }
+
+    // Get requesting hospital details for notification
+    const requestingHospital = await ctx.db.get(request.hospitalId);
+    if (requestingHospital) {
+      const requestingUser = await ctx.db.get(requestingHospital.userId);
+      
+      // Create notification for requesting hospital (optional - you may not want to notify on reject)
+      if (requestingUser) {
+        await ctx.db.insert("notifications", {
+          userId: requestingUser._id,
+          title: "Request Update",
+          message: `${hospital.hospitalName} is unable to fulfill your ${request.organType} request at this time.${args.reason ? ' Reason: ' + args.reason : ''}`,
+          type: "organ_donation",
+          read: false,
+          createdAt: Date.now(),
+        });
+      }
+    }
+
+    return args.requestId;
+  },
+});

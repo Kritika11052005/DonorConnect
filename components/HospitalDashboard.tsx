@@ -5,14 +5,16 @@ import { Building2, Heart, Activity, Users, Search, AlertCircle, MapPin, Star, F
 import HospitalSetupForm from './HospitalSetupForm';
 import HospitalEditForm from './HospitalEditForm';
 import OrganRequestForm from './OrganRequestForm';
-
+import OrganDetailsModal from './OrganDetailModal';
+import IncomingRequestsModal from './IncomingRequestsModal';
 export default function HospitalDashboard() {
   const currentHospital = useQuery(api.hospitals.getCurrentHospital);
   const availableOrgans = useQuery(api.hospitals.getHospitalOrganAvailability);
   const bloodDonationsCount = useQuery(api.hospitals.getCompletedBloodDonationsCount);
   const incomingRequests = useQuery(api.hospitals.getIncomingOrganRequests);
   const outgoingRequests = useQuery(api.hospitals.getOutgoingOrganRequests);
-  
+  const [showIncomingRequests, setShowIncomingRequests] = useState(false);
+  const [showOrganDetails, setShowOrganDetails] = useState(false);
   const [showSetupForm, setShowSetupForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [showRequestForm, setShowRequestForm] = useState(false);
@@ -99,59 +101,87 @@ export default function HospitalDashboard() {
         </div>
 
         {/* Stats Cards - NOW WITH 4 COLUMNS */}
+        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+          {/* Available Organs */}
           <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Available Organs</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">{availableOrgans?.length || 0}</p>
-              </div>
-              <div className="bg-purple-100 p-3 rounded-lg">
-                <Heart className="w-6 h-6 text-purple-600" />
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="bg-purple-100 p-3 rounded-lg">
+                  <Heart className="w-6 h-6 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Available Organs</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-1">
+                    {availableOrgans?.length || 0}
+                  </p>
+                </div>
               </div>
             </div>
+            <button
+              onClick={() => setShowOrganDetails(true)}
+              className="w-full mt-2 px-4 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 font-medium rounded-lg transition text-sm"
+            >
+              View Details
+            </button>
           </div>
 
+          {/* Blood Donations */}
           <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Blood Donations</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">{bloodDonationsCount || 0}</p>
-              </div>
+            <div className="flex items-center gap-3 mb-4">
               <div className="bg-red-100 p-3 rounded-lg">
                 <Activity className="w-6 h-6 text-red-600" />
               </div>
+              <div>
+                <p className="text-sm text-gray-600">Blood Donations</p>
+                <p className="text-3xl font-bold text-gray-900 mt-1">
+                  {bloodDonationsCount || 0}
+                </p>
+              </div>
             </div>
           </div>
 
+          {/* Incoming Requests */}
           <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="bg-orange-100 p-3 rounded-lg">
+                <AlertCircle className="w-6 h-6 text-orange-600" />
+              </div>
               <div>
                 <p className="text-sm text-gray-600">Incoming Requests</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">{incomingRequests?.length || 0}</p>
-              </div>
-              <div className="bg-orange-100 p-3 rounded-lg">
-                <Users className="w-6 h-6 text-orange-600" />
+                <p className="text-3xl font-bold text-gray-900 mt-1">
+                  {incomingRequests?.length || 0}
+                </p>
               </div>
             </div>
+            {incomingRequests && incomingRequests.length > 0 && (
+              <button
+                onClick={() => setShowIncomingRequests(true)}
+                className="w-full mt-2 px-4 py-2 bg-orange-50 hover:bg-orange-100 text-orange-700 font-medium rounded-lg transition text-sm"
+              >
+                View Requests
+              </button>
+            )}
           </div>
 
-          {/* NEW: Requests Sent Card */}
+          {/* Outgoing Requests */}
           <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Requests Sent</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">{outgoingRequests?.length || 0}</p>
-              </div>
+            <div className="flex items-center gap-3 mb-4">
               <div className="bg-blue-100 p-3 rounded-lg">
                 <Send className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Outgoing Requests</p>
+                <p className="text-3xl font-bold text-gray-900 mt-1">
+                  {outgoingRequests?.length || 0}
+                </p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Incoming Organ Requests */}
-        {incomingRequests && incomingRequests.length > 0 && (
+        {Array.isArray(incomingRequests) && incomingRequests.length > 0 && (
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
               <AlertCircle className="w-5 h-5 text-orange-600" />
@@ -207,6 +237,7 @@ export default function HospitalDashboard() {
             </div>
           </div>
         )}
+        
 
         {/* Create Request Button */}
         <div className="mb-6">
@@ -354,6 +385,12 @@ export default function HospitalDashboard() {
           </div>
         </div>
       </div>
+      {showOrganDetails && (
+  <OrganDetailsModal onClose={() => setShowOrganDetails(false)} />
+)}
+{showIncomingRequests && (
+  <IncomingRequestsModal onClose={() => setShowIncomingRequests(false)} />
+)}
     </div>
   );
 }
