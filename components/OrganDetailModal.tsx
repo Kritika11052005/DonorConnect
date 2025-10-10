@@ -5,7 +5,7 @@ import { useQuery, useMutation } from 'convex/react';
 import { api } from '../convex/_generated/api';
 import { X, Plus, Edit2, Trash2, Heart, Calendar, User } from 'lucide-react';
 import { format } from 'date-fns';
-
+import { toast } from 'sonner';
 interface OrganDetailsModalProps {
   onClose: () => void;
 }
@@ -48,34 +48,42 @@ export default function OrganDetailsModal({ onClose }: OrganDetailsModalProps) {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+  e.preventDefault();
+  setIsSubmitting(true);
 
-    try {
-      if (editingOrgan) {
-        await updateOrgan({
-          organId: editingOrgan._id,
-          quantity: parseInt(formData.quantity),
-          availableUntil: new Date(formData.availableUntil).getTime(),
-          notes: formData.notes || undefined,
-        });
-      } else {
-        await addOrgan({
-          organType: formData.organType,
-          bloodGroup: formData.bloodGroup,
-          quantity: parseInt(formData.quantity),
-          availableUntil: new Date(formData.availableUntil).getTime(),
-          donorAge: formData.donorAge ? parseInt(formData.donorAge) : undefined,
-          notes: formData.notes || undefined,
-        });
-      }
-      resetForm();
-    } catch (error) {
-      alert(error instanceof Error ? error.message : 'Failed to save organ');
-    } finally {
-      setIsSubmitting(false);
+  try {
+    if (editingOrgan) {
+      await updateOrgan({
+        organId: editingOrgan._id,
+        quantity: parseInt(formData.quantity),
+        availableUntil: new Date(formData.availableUntil).getTime(),
+        notes: formData.notes || undefined,
+      });
+      toast.success('Organ updated successfully', {
+        description: 'The organ record has been updated.',
+      });
+    } else {
+      await addOrgan({
+        organType: formData.organType,
+        bloodGroup: formData.bloodGroup,
+        quantity: parseInt(formData.quantity),
+        availableUntil: new Date(formData.availableUntil).getTime(),
+        donorAge: formData.donorAge ? parseInt(formData.donorAge) : undefined,
+        notes: formData.notes || undefined,
+      });
+      toast.success('Organ added successfully', {
+        description: 'The new organ record has been added.',
+      });
     }
-  };
+    resetForm();
+  } catch (error) {
+    toast.error('Failed to save organ', {
+      description: error instanceof Error ? error.message : 'Failed to save organ',
+    });
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const handleEdit = (record: any) => {
     setEditingOrgan(record);
@@ -91,14 +99,31 @@ export default function OrganDetailsModal({ onClose }: OrganDetailsModalProps) {
   };
 
   const handleDelete = async (organId: string) => {
-    if (confirm('Are you sure you want to delete this organ record?')) {
-      try {
-        await deleteOrgan({ organId: organId as any });
-      } catch (error) {
-        alert(error instanceof Error ? error.message : 'Failed to delete organ');
-      }
-    }
-  };
+  toast('Are you sure you want to delete this organ record?', {
+    description: 'This action cannot be undone.',
+    action: {
+      label: 'Delete',
+      onClick: async () => {
+        const loadingToast = toast.loading('Deleting organ...');
+        try {
+          await deleteOrgan({ organId: organId as any });
+          toast.success('Organ deleted successfully', {
+            id: loadingToast,
+          });
+        } catch (error) {
+          toast.error('Failed to delete organ', {
+            id: loadingToast,
+            description: error instanceof Error ? error.message : 'Failed to delete organ',
+          });
+        }
+      },
+    },
+    cancel: {
+      label: 'Cancel',
+      onClick: () => {}, // No-op handler to satisfy Action type
+    },
+  });
+};
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

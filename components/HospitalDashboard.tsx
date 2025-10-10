@@ -7,6 +7,7 @@ import HospitalEditForm from './HospitalEditForm';
 import OrganRequestForm from './OrganRequestForm';
 import OrganDetailsModal from './OrganDetailModal';
 import IncomingRequestsModal from './IncomingRequestsModal';
+import OutgoingRequestsModal from './OutgoingRequestsModal';
 export default function HospitalDashboard() {
   const currentHospital = useQuery(api.hospitals.getCurrentHospital);
   const availableOrgans = useQuery(api.hospitals.getHospitalOrganAvailability);
@@ -22,6 +23,7 @@ export default function HospitalDashboard() {
   const [selectedCity, setSelectedCity] = useState('');
   const [sortBy, setSortBy] = useState('urgency');
   const [showFilters, setShowFilters] = useState(false);
+  const [showOutgoingRequests, setShowOutgoingRequests] = useState(false);
 
   const searchResults = useQuery(api.hospitals.searchHospitals, {
     searchTerm: searchTerm || undefined,
@@ -77,11 +79,10 @@ export default function HospitalDashboard() {
                 <h1 className="text-3xl font-bold text-gray-900">{currentHospital.hospitalName}</h1>
                 <p className="text-gray-600 mt-1">{currentHospital.user?.city}, {currentHospital.user?.state}</p>
                 <div className="flex items-center gap-2 mt-2">
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    currentHospital.verified
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${currentHospital.verified
                       ? 'bg-green-100 text-green-700'
                       : 'bg-yellow-100 text-yellow-700'
-                  }`}>
+                    }`}>
                     {currentHospital.verified ? 'Verified' : 'Pending Verification'}
                   </span>
                   <span className="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700 capitalize">
@@ -164,6 +165,7 @@ export default function HospitalDashboard() {
             )}
           </div>
 
+
           {/* Outgoing Requests */}
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center gap-3 mb-4">
@@ -177,7 +179,16 @@ export default function HospitalDashboard() {
                 </p>
               </div>
             </div>
+            {outgoingRequests && outgoingRequests.length > 0 && (
+              <button
+                onClick={() => setShowOutgoingRequests(true)}
+                className="w-full mt-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium rounded-lg transition text-sm"
+              >
+                View Details
+              </button>
+            )}
           </div>
+
         </div>
 
         {/* Incoming Organ Requests */}
@@ -196,13 +207,12 @@ export default function HospitalDashboard() {
                         <h3 className="font-semibold text-gray-900">
                           {request.requestingHospital?.hospitalName}
                         </h3>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          request.urgency === 'critical'
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${request.urgency === 'critical'
                             ? 'bg-red-100 text-red-700'
                             : request.urgency === 'urgent'
-                            ? 'bg-orange-100 text-orange-700'
-                            : 'bg-blue-100 text-blue-700'
-                        }`}>
+                              ? 'bg-orange-100 text-orange-700'
+                              : 'bg-blue-100 text-blue-700'
+                          }`}>
                           {request.urgency.toUpperCase()}
                         </span>
                       </div>
@@ -237,7 +247,7 @@ export default function HospitalDashboard() {
             </div>
           </div>
         )}
-        
+
 
         {/* Create Request Button */}
         <div className="mb-6">
@@ -257,7 +267,7 @@ export default function HospitalDashboard() {
         {/* Search Section */}
         <div className="bg-white rounded-lg shadow-sm p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Find Hospitals</h2>
-          
+
           {/* Search Bar */}
           <div className="flex gap-4 mb-4">
             <div className="flex-1 relative">
@@ -321,9 +331,8 @@ export default function HospitalDashboard() {
               searchResults.map((hospital) => (
                 <div
                   key={hospital._id}
-                  className={`border rounded-lg p-4 hover:shadow-md transition ${
-                    hospital.urgentRequestsCount > 0 ? 'border-red-300 bg-red-50' : ''
-                  }`}
+                  className={`border rounded-lg p-4 hover:shadow-md transition ${hospital.urgentRequestsCount > 0 ? 'border-red-300 bg-red-50' : ''
+                    }`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -386,10 +395,13 @@ export default function HospitalDashboard() {
         </div>
       </div>
       {showOrganDetails && (
-  <OrganDetailsModal onClose={() => setShowOrganDetails(false)} />
-)}
-{showIncomingRequests && (
-  <IncomingRequestsModal onClose={() => setShowIncomingRequests(false)} />
+        <OrganDetailsModal onClose={() => setShowOrganDetails(false)} />
+      )}
+      {showIncomingRequests && (
+        <IncomingRequestsModal onClose={() => setShowIncomingRequests(false)} />
+      )}
+      {showOutgoingRequests && (
+  <OutgoingRequestsModal onClose={() => setShowOutgoingRequests(false)} />
 )}
     </div>
   );

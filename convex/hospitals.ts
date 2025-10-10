@@ -994,3 +994,97 @@ export const rejectOrganRequest = mutation({
     return args.requestId;
   },
 });
+export const updateOrganTransplantRequest = mutation({
+  args: {
+    requestId: v.id("organTransplantRequests"),
+    urgency: v.optional(v.union(v.literal("critical"), v.literal("urgent"), v.literal("normal"))),
+    patientAge: v.optional(v.number()),
+    additionalDetails: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const request = await ctx.db.get(args.requestId);
+    if (!request) {
+      throw new Error("Request not found");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const hospital = await ctx.db
+      .query("hospitals")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .unique();
+
+    if (!hospital || request.hospitalId !== hospital._id) {
+      throw new Error("Unauthorized: You can only edit your own requests");
+    }
+
+    if (request.status !== "open") {
+      throw new Error("Cannot edit a request that is not open");
+    }
+
+    const updates: any = {};
+    if (args.urgency !== undefined) updates.urgency = args.urgency;
+    if (args.patientAge !== undefined) updates.patientAge = args.patientAge;
+    if (args.additionalDetails !== undefined) updates.additionalDetails = args.additionalDetails;
+
+    await ctx.db.patch(args.requestId, updates);
+
+    return args.requestId;
+  },
+});
+
+// Delete organ transplant request
+export const deleteOrganTransplantRequest = mutation({
+  args: {
+    requestId: v.id("organTransplantRequests"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const request = await ctx.db.get(args.requestId);
+    if (!request) {
+      throw new Error("Request not found");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const hospital = await ctx.db
+      .query("hospitals")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .unique();
+
+    if (!hospital || request.hospitalId !== hospital._id) {
+      throw new Error("Unauthorized: You can only delete your own requests");
+    }
+
+    if (request.status === "matched") {
+      throw new Error("Cannot delete a request that has been matched");
+    }
+
+    await ctx.db.delete(args.requestId);
+
+    return true;
+  },
+});

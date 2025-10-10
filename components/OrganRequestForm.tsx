@@ -4,6 +4,7 @@ import { useQuery, useMutation } from 'convex/react';
 import { api } from '../convex/_generated/api';
 import { Building2, Heart, Activity, Users, Search, AlertCircle, MapPin, Star, Filter, Plus, Edit2, X, ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
+import {toast} from 'sonner';
 
 export default function OrganRequestForm({ onClose }: { onClose: () => void }) {
   const createRequest = useMutation(api.hospitals.createOrganTransplantRequest);
@@ -22,25 +23,30 @@ export default function OrganRequestForm({ onClose }: { onClose: () => void }) {
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (formData.organType && formData.patientAge) {
-      setIsSubmitting(true);
-      try {
-        await createRequest({
-          organType: formData.organType,
-          patientBloodGroup: formData.patientBloodGroup,
-          urgency: formData.urgency,
-          patientAge: parseInt(formData.patientAge),
-          additionalDetails: formData.additionalDetails || undefined,
-        });
-        onClose();
-      } catch (error) {
-        alert(error instanceof Error ? error.message : 'Failed to create request');
-      } finally {
-        setIsSubmitting(false);
-      }
+  e.preventDefault();
+  if (formData.organType && formData.patientAge) {
+    setIsSubmitting(true);
+    try {
+      await createRequest({
+        organType: formData.organType,
+        patientBloodGroup: formData.patientBloodGroup,
+        urgency: formData.urgency,
+        patientAge: parseInt(formData.patientAge),
+        additionalDetails: formData.additionalDetails || undefined,
+      });
+      toast.success('Request submitted successfully', {
+        description: 'Your organ request has been created.',
+      });
+      onClose();
+    } catch (error) {
+      toast.error('Failed to create request', {
+        description: error instanceof Error ? error.message : 'Failed to create request',
+      });
+    } finally {
+      setIsSubmitting(false);
     }
-  };
+  }
+};
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
