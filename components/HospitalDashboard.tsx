@@ -8,6 +8,7 @@ import OrganRequestForm from './OrganRequestForm';
 import OrganDetailsModal from './OrganDetailModal';
 import IncomingRequestsModal from './IncomingRequestsModal';
 import OutgoingRequestsModal from './OutgoingRequestsModal';
+import BloodDonationsModal from './BloodDonationsModal';
 export default function HospitalDashboard() {
   const currentHospital = useQuery(api.hospitals.getCurrentHospital);
   const availableOrgans = useQuery(api.hospitals.getHospitalOrganAvailability);
@@ -24,7 +25,7 @@ export default function HospitalDashboard() {
   const [sortBy, setSortBy] = useState('urgency');
   const [showFilters, setShowFilters] = useState(false);
   const [showOutgoingRequests, setShowOutgoingRequests] = useState(false);
-
+  const [showBloodDonationsModal, setShowBloodDonationsModal] = useState(false);
   const searchResults = useQuery(api.hospitals.searchHospitals, {
     searchTerm: searchTerm || undefined,
     city: selectedCity || undefined,
@@ -80,8 +81,8 @@ export default function HospitalDashboard() {
                 <p className="text-gray-600 mt-1">{currentHospital.user?.city}, {currentHospital.user?.state}</p>
                 <div className="flex items-center gap-2 mt-2">
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${currentHospital.verified
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-yellow-100 text-yellow-700'
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-yellow-100 text-yellow-700'
                     }`}>
                     {currentHospital.verified ? 'Verified' : 'Pending Verification'}
                   </span>
@@ -140,6 +141,12 @@ export default function HospitalDashboard() {
                 </p>
               </div>
             </div>
+            <button
+              onClick={() => setShowBloodDonationsModal(true)}
+              className="w-full mt-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-700 font-medium rounded-lg transition text-sm"
+            >
+              View Details
+            </button>
           </div>
 
           {/* Incoming Requests */}
@@ -208,10 +215,10 @@ export default function HospitalDashboard() {
                           {request.requestingHospital?.hospitalName}
                         </h3>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${request.urgency === 'critical'
-                            ? 'bg-red-100 text-red-700'
-                            : request.urgency === 'urgent'
-                              ? 'bg-orange-100 text-orange-700'
-                              : 'bg-blue-100 text-blue-700'
+                          ? 'bg-red-100 text-red-700'
+                          : request.urgency === 'urgent'
+                            ? 'bg-orange-100 text-orange-700'
+                            : 'bg-blue-100 text-blue-700'
                           }`}>
                           {request.urgency.toUpperCase()}
                         </span>
@@ -401,8 +408,11 @@ export default function HospitalDashboard() {
         <IncomingRequestsModal onClose={() => setShowIncomingRequests(false)} />
       )}
       {showOutgoingRequests && (
-  <OutgoingRequestsModal onClose={() => setShowOutgoingRequests(false)} />
-)}
+        <OutgoingRequestsModal onClose={() => setShowOutgoingRequests(false)} />
+      )}
+      {showBloodDonationsModal && (
+        <BloodDonationsModal onClose={() => setShowBloodDonationsModal(false)} />
+      )}
     </div>
   );
 }

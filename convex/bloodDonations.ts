@@ -318,3 +318,249 @@ export const getLastCompletedDonation = query({
     return sortedAppointments[0] || null;
   },
 });
+// Get all blood donation appointments for the current hospital
+export const getHospitalBloodDonations = query({
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return null;
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) return null;
+
+    const hospital = await ctx.db
+      .query("hospitals")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .unique();
+
+    if (!hospital) return null;
+
+    // Get all appointments for this hospital
+    const appointments = await ctx.db
+      .query("bloodDonationAppointments")
+      .withIndex("by_hospitalId", (q) => q.eq("hospitalId", hospital._id))
+      .collect();
+
+    // Get donor and user details for each appointment
+    const appointmentsWithDetails = await Promise.all(
+      appointments.map(async (apt) => {
+        const donor = await ctx.db.get(apt.donorId);
+        const donorUser = donor ? await ctx.db.get(donor.userId) : null;
+        
+        return {
+          ...apt,
+          donor,
+          donorUser,
+        };
+      })
+    );
+
+    // Sort by scheduled date (newest first)
+    return appointmentsWithDetails.sort((a, b) => b.scheduledDate - a.scheduledDate);
+  },
+});
+
+// Mark appointment as completed
+export const completeBloodDonation = mutation({
+  args: {
+    appointmentId: v.id("bloodDonationAppointments"),
+    completedAt: v.optional(v.number()),
+    notes: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    // Verify the user is a hospital
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user || user.role !== "hospital") {
+      throw new Error("Only hospitals can mark donations as completed");
+    }
+
+    const hospital = await ctx.db
+      .query("hospitals")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .unique();
+
+    if (!hospital) {
+      throw new Error("Hospital not found");
+    }
+
+    // Verify the appointment belongs to this hospital
+    const appointment = await ctx.db.get(args.appointmentId);
+    if (!appointment) {
+      throw new Error("Appointment not found");
+    }
+
+    if (appointment.hospitalId !== hospital._id) {
+      throw new Error("Unauthorized: This appointment does not belong to your hospital");
+    }
+
+    if (appointment.status === "completed") {
+      throw new Error("This donation is already marked as completed");
+    }
+
+    // Update appointment status
+    await ctx.db.patch(args.appointmentId, {
+      status: "completed",
+      completedAt: args.completedAt || Date.now(),
+      notes: args.notes || appointment.notes,
+    });
+
+    // Update donor's last donation date
+    const donor = await ctx.db.get(appointment.donorId);
+    if (donor) {
+      const completionDate = args.completedAt || Date.now();
+      const nextEligibleDate = completionDate + (90 * 24 * 60 * 60 * 1000); // 90 days later
+
+      await ctx.db.patch(donor._id, {
+        lastBloodDonationDate: completionDate,
+        nextEligibleBloodDonationDate: nextEligibleDate,
+      });
+    }
+
+    return { success: true, message: "Blood donation marked as completed" };
+  },
+});
+
+// Mark appointment as missed
+export const markAppointmentMissed = mutation({
+  args: {
+    appointmentId: v.id("bloodDonationAppointments"),
+    notes: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user || user.role !== "hospital") {
+      throw new Error("Only hospitals can mark appointments as missed");
+    }
+
+    const hospital = await ctx.db
+      .query("hospitals")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .unique();
+
+    if (!hospital) {
+      throw new Error("Hospital not found");
+    }
+
+    const appointment = await ctx.db.get(args.appointmentId);
+    if (!appointment) {
+      throw new Error("Appointment not found");
+    }
+
+    if (appointment.hospitalId !== hospital._id) {
+      throw new Error("Unauthorized");
+    }
+
+    await ctx.db.patch(args.appointmentId, {
+      status: "missed",
+      notes: args.notes || appointment.notes,
+    });
+
+    return { success: true };
+  },
+});
+// Add this mutation to your convex/bloodDonations.ts file
+
+export const updateBloodDonationAppointment = mutation({
+  args: {
+    appointmentId: v.id("bloodDonationAppointments"),
+    status: v.optional(v.union(
+      v.literal("scheduled"),
+      v.literal("completed"),
+      v.literal("missed"),
+      v.literal("cancelled")
+    )),
+    completedAt: v.optional(v.number()),
+    notes: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    // Verify the user is a hospital
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user || user.role !== "hospital") {
+      throw new Error("Only hospitals can update appointments");
+    }
+
+    const hospital = await ctx.db
+      .query("hospitals")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .unique();
+
+    if (!hospital) {
+      throw new Error("Hospital not found");
+    }
+
+    // Verify the appointment belongs to this hospital
+    const appointment = await ctx.db.get(args.appointmentId);
+    if (!appointment) {
+      throw new Error("Appointment not found");
+    }
+
+    if (appointment.hospitalId !== hospital._id) {
+      throw new Error("Unauthorized: This appointment does not belong to your hospital");
+    }
+
+    // Prepare update data
+    const updateData: any = {};
+    
+    if (args.status !== undefined) {
+      updateData.status = args.status;
+    }
+    
+    if (args.completedAt !== undefined) {
+      updateData.completedAt = args.completedAt;
+    }
+    
+    if (args.notes !== undefined) {
+      updateData.notes = args.notes;
+    }
+
+    // Update appointment
+    await ctx.db.patch(args.appointmentId, updateData);
+
+    // If status changed to completed and we have a completion date, update donor record
+    if (args.status === "completed" && args.completedAt) {
+      const donor = await ctx.db.get(appointment.donorId);
+      if (donor) {
+        const nextEligibleDate = args.completedAt + (90 * 24 * 60 * 60 * 1000); // 90 days later
+
+        await ctx.db.patch(donor._id, {
+          lastBloodDonationDate: args.completedAt,
+          nextEligibleBloodDonationDate: nextEligibleDate,
+        });
+      }
+    }
+
+    return { success: true, message: "Appointment updated successfully" };
+  },
+});

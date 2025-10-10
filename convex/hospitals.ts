@@ -1,3 +1,31 @@
+// Get all blood donation appointments for the current hospital
+export const getHospitalBloodDonations = query({
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) return [];
+
+    const hospital = await ctx.db
+      .query("hospitals")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .unique();
+
+    if (!hospital) return [];
+
+    const appointments = await ctx.db
+      .query("bloodDonationAppointments")
+      .withIndex("by_hospitalId", (q) => q.eq("hospitalId", hospital._id))
+      .collect();
+
+    return appointments;
+  },
+});
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
