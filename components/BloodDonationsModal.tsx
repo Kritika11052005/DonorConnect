@@ -4,7 +4,8 @@ import { api } from '../convex/_generated/api';
 import { X, Activity, Calendar, User, Phone, Mail, MapPin, Clock, Check, XCircle, Edit2, Filter, ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-
+import DatePicker from './DatePicker';
+import CustomDropDown from './CustomDropDown';
 interface BloodDonationsModalProps {
   onClose: () => void;
 }
@@ -359,17 +360,13 @@ export default function BloodDonationsModal({ onClose }: BloodDonationsModalProp
                       <h4 className="font-semibold text-green-900 mb-3">Mark donation as completed</h4>
                       
                       <div className="grid grid-cols-2 gap-3 mb-3">
-                        <div>
-                          <label className="block text-sm font-medium text-green-900 mb-1">
-                            Completion Date
-                          </label>
-                          <input
-                            type="date"
-                            value={completionForm.completedAt}
-                            onChange={(e) => setCompletionForm({ ...completionForm, completedAt: e.target.value })}
-                            className="w-full px-3 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                          />
-                        </div>
+                        <DatePicker
+  value={completionForm.completedAt}
+  onChange={(date) => setCompletionForm({ ...completionForm, completedAt: date })}
+  maxDate={new Date()} // Only today or past
+  label="Completion Date"
+  required
+/>
                         <div>
                           <label className="block text-sm font-medium text-green-900 mb-1">
                             Completion Time
@@ -467,36 +464,29 @@ export default function BloodDonationsModal({ onClose }: BloodDonationsModalProp
               </div>
 
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Status
-                  </label>
-                  <select
-                    value={editForm.status}
-                    onChange={(e) => setEditForm({ ...editForm, status: e.target.value as any })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  >
-                    <option value="scheduled">Scheduled</option>
-                    <option value="completed">Completed</option>
-                    <option value="missed">Missed</option>
-                    <option value="cancelled">Cancelled</option>
-                  </select>
-                </div>
+                <CustomDropDown
+  label="Status"
+  value={editForm.status}
+  options={[
+    { value: 'scheduled', label: 'Scheduled', description: 'Appointment is scheduled' },
+    { value: 'completed', label: 'Completed', description: 'Donation completed successfully' },
+    { value: 'missed', label: 'Missed', description: 'Donor did not show up' },
+    { value: 'cancelled', label: 'Cancelled', description: 'Appointment was cancelled' },
+  ]}
+  onChange={(value:any) => setEditForm({ ...editForm, status: value as any })}
+  placeholder="Select status"
+/>
 
                 {editForm.status === 'completed' && (
                   <>
                     <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Completion Date
-                        </label>
-                        <input
-                          type="date"
-                          value={editForm.completedAt}
-                          onChange={(e) => setEditForm({ ...editForm, completedAt: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                        />
-                      </div>
+                      <DatePicker
+  value={editForm.completedAt}
+  onChange={(date) => setEditForm({ ...editForm, completedAt: date })}
+  maxDate={new Date()}
+  label="Completion Date"
+  required
+/>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Completion Time

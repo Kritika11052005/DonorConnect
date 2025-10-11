@@ -6,6 +6,8 @@ import { api } from '../convex/_generated/api';
 import { X, Plus, Edit2, Trash2, Heart, Calendar, User } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import DatePicker from './DatePicker';
+import CustomDropDown from './CustomDropDown';
 interface OrganDetailsModalProps {
   onClose: () => void;
 }
@@ -167,45 +169,32 @@ export default function OrganDetailsModal({ onClose }: OrganDetailsModalProps) {
               </h3>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Organ Type <span className="text-red-600">*</span>
-                    </label>
-                    <select
-                      required
-                      disabled={!!editingOrgan}
-                      value={formData.organType}
-                      onChange={(e) => setFormData({ ...formData, organType: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-gray-100"
-                    >
-                      <option value="">Select organ</option>
-                      {organTypes.map((organ) => (
-                        <option key={organ} value={organ}>{organ}</option>
-                      ))}
-                    </select>
-                  </div>
+                  <CustomDropDown
+  label="Organ Type"
+  value={formData.organType}
+  options={organTypes.map(organ => ({ value: organ, label: organ }))}
+  onChange={(value) => setFormData({ ...formData, organType: value as string })}
+  placeholder="Select organ"
+  
+/>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Blood Group <span className="text-red-600">*</span>
-                    </label>
-                    <select
-                      required
-                      disabled={!!editingOrgan}
-                      value={formData.bloodGroup}
-                      onChange={(e) => setFormData({ ...formData, bloodGroup: e.target.value as any })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-gray-100"
-                    >
-                      <option value="A+">A+</option>
-                      <option value="A-">A-</option>
-                      <option value="B+">B+</option>
-                      <option value="B-">B-</option>
-                      <option value="AB+">AB+</option>
-                      <option value="AB-">AB-</option>
-                      <option value="O+">O+</option>
-                      <option value="O-">O-</option>
-                    </select>
-                  </div>
+                  <CustomDropDown
+  label="Blood Group"
+  value={formData.bloodGroup}
+  options={[
+    { value: 'A+', label: 'A+' },
+    { value: 'A-', label: 'A-' },
+    { value: 'B+', label: 'B+' },
+    { value: 'B-', label: 'B-' },
+    { value: 'AB+', label: 'AB+' },
+    { value: 'AB-', label: 'AB-' },
+    { value: 'O+', label: 'O+' },
+    { value: 'O-', label: 'O-' },
+  ]}
+  onChange={(value) => setFormData({ ...formData, bloodGroup: value as any })}
+  placeholder="Select blood group"
+  
+/>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -221,18 +210,13 @@ export default function OrganDetailsModal({ onClose }: OrganDetailsModalProps) {
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Available Until <span className="text-red-600">*</span>
-                    </label>
-                    <input
-                      type="date"
-                      required
-                      value={formData.availableUntil}
-                      onChange={(e) => setFormData({ ...formData, availableUntil: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    />
-                  </div>
+                  <DatePicker
+  value={formData.availableUntil}
+  onChange={(date) => setFormData({ ...formData, availableUntil: date })}
+  minDate={new Date(Date.now() + 86400000)} // Tomorrow
+  label="Available Until"
+  required
+/>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">

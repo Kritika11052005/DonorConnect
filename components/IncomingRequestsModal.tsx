@@ -5,7 +5,7 @@ import { useQuery, useMutation } from 'convex/react';
 import { api } from '../convex/_generated/api';
 import { X, Users, MapPin, Phone, Mail, Building2, AlertCircle, Check, XCircle, Calendar, User as UserIcon } from 'lucide-react';
 import { format } from 'date-fns';
-
+import {toast} from 'sonner';
 interface IncomingRequestsModalProps {
   onClose: () => void;
 }
@@ -25,35 +25,35 @@ export default function IncomingRequestsModal({ onClose }: IncomingRequestsModal
   const handleAccept = async (requestId: string) => {
     setAcceptingId(requestId);
     try {
-      await acceptRequest({
-        requestId: requestId as any,
-        message: acceptMessage || undefined,
-      });
-      setShowAcceptDialog(null);
-      setAcceptMessage('');
-      alert('Request accepted successfully! The requesting hospital has been notified.');
-    } catch (error) {
-      alert(error instanceof Error ? error.message : 'Failed to accept request');
-    } finally {
-      setAcceptingId(null);
-    }
+  await acceptRequest({
+    requestId: requestId as any,
+    message: acceptMessage || undefined,
+  });
+  setShowAcceptDialog(null);
+  setAcceptMessage('');
+  toast.success('Request accepted successfully! The requesting hospital has been notified.');
+} catch (error) {
+  toast.error(error instanceof Error ? error.message : 'Failed to accept request');
+} finally {
+  setAcceptingId(null);
+}
   };
 
   const handleReject = async (requestId: string) => {
     setRejectingId(requestId);
     try {
-      await rejectRequest({
-        requestId: requestId as any,
-        reason: rejectReason || undefined,
-      });
-      setShowRejectDialog(null);
-      setRejectReason('');
-      alert('Request declined. The requesting hospital has been notified.');
-    } catch (error) {
-      alert(error instanceof Error ? error.message : 'Failed to reject request');
-    } finally {
-      setRejectingId(null);
-    }
+  await rejectRequest({
+    requestId: requestId as any,
+    reason: rejectReason || undefined,
+  });
+  setShowRejectDialog(null);
+  setRejectReason('');
+  toast.success('Request declined. The requesting hospital has been notified.');
+} catch (error) {
+  toast.error(error instanceof Error ? error.message : 'Failed to reject request');
+} finally {
+  setRejectingId(null);
+}
   };
 
   const getUrgencyColor = (urgency: string) => {

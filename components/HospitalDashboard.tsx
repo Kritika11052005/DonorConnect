@@ -9,6 +9,7 @@ import OrganDetailsModal from './OrganDetailModal';
 import IncomingRequestsModal from './IncomingRequestsModal';
 import OutgoingRequestsModal from './OutgoingRequestsModal';
 import BloodDonationsModal from './BloodDonationsModal';
+import CustomDropdown from './CustomDropDown';
 export default function HospitalDashboard() {
   const currentHospital = useQuery(api.hospitals.getCurrentHospital);
   const availableOrgans = useQuery(api.hospitals.getHospitalOrganAvailability);
@@ -299,34 +300,34 @@ export default function HospitalDashboard() {
 
           {/* Filters */}
           {showFilters && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                >
-                  <option value="urgency">Urgent Needs First</option>
-                  <option value="rating">Highest Rated</option>
-                  <option value="name">A-Z</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Filter by City</label>
-                <select
-                  value={selectedCity}
-                  onChange={(e) => setSelectedCity(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                >
-                  <option value="">All Cities</option>
-                  {cities.map((city) => (
-                    <option key={city} value={city}>{city}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          )}
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
+    <CustomDropdown
+      label="Sort By"
+      value={sortBy}
+      onChange={(value) => setSortBy(value as string)}
+      options={[
+        { value: 'urgency', label: 'Urgent Needs First', description: 'Show critical requests first' },
+        { value: 'rating', label: 'Highest Rated', description: 'Top-rated hospitals first' },
+        { value: 'name', label: 'A-Z', description: 'Alphabetical order' },
+      ]}
+      placeholder="Select sorting option"
+    />
+    
+    <CustomDropdown
+      label="Filter by City"
+      value={selectedCity}
+      onChange={(value) => setSelectedCity(value as string)}
+      options={[
+        { value: '', label: 'All Cities', description: 'Show hospitals from all cities' },
+        ...cities.map((city) => ({
+          value: city,
+          label: city,
+        })),
+      ]}
+      placeholder="Select a city"
+    />
+  </div>
+)}
 
           {/* Hospital Results */}
           <div className="space-y-4">

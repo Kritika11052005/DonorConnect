@@ -1,11 +1,12 @@
 // Create this as: components/OutgoingRequestsModal.tsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../convex/_generated/api';
-import { X, Send, Edit2, Trash2, AlertCircle, Calendar, User, Heart, Plus } from 'lucide-react';
+import { X, Send, Edit2, Trash2, AlertCircle, Heart, Radio, Building2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import CustomDropDown from './CustomDropDown';
 
 interface OutgoingRequestsModalProps {
   onClose: () => void;
@@ -13,37 +14,70 @@ interface OutgoingRequestsModalProps {
 
 export default function OutgoingRequestsModal({ onClose }: OutgoingRequestsModalProps) {
   const outgoingRequests = useQuery(api.hospitals.getOutgoingOrganRequests);
+  const hospitals = useQuery(api.hospitals.getOtherHospitals);
   const updateRequest = useMutation(api.hospitals.updateOrganTransplantRequest);
   const deleteRequest = useMutation(api.hospitals.deleteOrganTransplantRequest);
 
   const [editingRequest, setEditingRequest] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [requestType, setRequestType] = useState<'broadcast' | 'specific'>('broadcast');
   const [formData, setFormData] = useState({
     urgency: 'normal' as 'critical' | 'urgent' | 'normal',
     patientAge: '',
     additionalDetails: '',
+    targetHospitalId: undefined as string | undefined,
   });
+
+  // Map to store hospital details for display
+  const [hospitalMap, setHospitalMap] = useState<Map<string, any>>(new Map());
+
+  useEffect(() => {
+    if (hospitals) {
+      const map = new Map();
+      hospitals.forEach(h => map.set(h._id, h));
+      setHospitalMap(map);
+    }
+  }, [hospitals]);
 
   const resetForm = () => {
     setFormData({
       urgency: 'normal',
       patientAge: '',
       additionalDetails: '',
+      targetHospitalId: undefined,
     });
     setEditingRequest(null);
+    setRequestType('broadcast');
   };
 
   const handleEdit = (request: any) => {
     setEditingRequest(request);
+    setRequestType(request.targetHospitalId ? 'specific' : 'broadcast');
     setFormData({
       urgency: request.urgency,
       patientAge: request.patientAge.toString(),
       additionalDetails: request.additionalDetails || '',
+      targetHospitalId: request.targetHospitalId,
     });
+  };
+
+  const handleRequestTypeChange = (type: 'broadcast' | 'specific') => {
+    setRequestType(type);
+    if (type === 'broadcast') {
+      setFormData({ ...formData, targetHospitalId: undefined });
+    }
   };
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (requestType === 'specific' && !formData.targetHospitalId) {
+      toast.error('Please select a hospital', {
+        description: 'You must select a specific hospital for targeted requests.',
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -117,6 +151,12 @@ export default function OutgoingRequestsModal({ onClose }: OutgoingRequestsModal
     }
   };
 
+  const hospitalOptions = hospitals?.map(h => ({
+    value: h._id,
+    label: h.hospitalName,
+    description: `${h.city}, ${h.state} • ${h.hospitalType}`,
+  })) || [];
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
@@ -160,23 +200,91 @@ export default function OutgoingRequestsModal({ onClose }: OutgoingRequestsModal
                   </div>
                 </div>
               </div>
+
               <form onSubmit={handleUpdate} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Urgency <span className="text-red-600">*</span>
-                    </label>
-                    <select
-                      required
-                      value={formData.urgency}
-                      onChange={(e) => setFormData({ ...formData, urgency: e.target.value as any })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                {/* Request Type Selection in Edit Mode */}
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border-2 border-blue-200">
+                  <label className="block text-sm font-semibold text-gray-700 mb-3">
+                    Request Type <span className="text-red-600">*</span>
+                  </label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => handleRequestTypeChange('broadcast')}
+                      className={`p-4 rounded-lg border-2 transition-all duration-200 text-left ${
+                        requestType === 'broadcast'
+                          ? 'border-blue-500 bg-blue-100 shadow-md'
+                          : 'border-gray-300 bg-white hover:border-blue-300'
+                      }`}
                     >
-                      <option value="normal">Normal</option>
-                      <option value="urgent">Urgent</option>
-                      <option value="critical">Critical</option>
-                    </select>
+                      <div className="flex items-center gap-3">
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          requestType === 'broadcast' ? 'border-blue-500' : 'border-gray-300'
+                        }`}>
+                          {requestType === 'broadcast' && (
+                            <div className="w-3 h-3 rounded-full bg-blue-500" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-semibold text-gray-900">Broadcast to All</p>
+                          <p className="text-xs text-gray-600 mt-1">
+                            Send request to all hospitals
+                          </p>
+                        </div>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleRequestTypeChange('specific')}
+                      className={`p-4 rounded-lg border-2 transition-all duration-200 text-left ${
+                        requestType === 'specific'
+                          ? 'border-blue-500 bg-blue-100 shadow-md'
+                          : 'border-gray-300 bg-white hover:border-blue-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          requestType === 'specific' ? 'border-blue-500' : 'border-gray-300'
+                        }`}>
+                          {requestType === 'specific' && (
+                            <div className="w-3 h-3 rounded-full bg-blue-500" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-semibold text-gray-900">Specific Hospital</p>
+                          <p className="text-xs text-gray-600 mt-1">
+                            Target a particular hospital
+                          </p>
+                        </div>
+                      </div>
+                    </button>
                   </div>
+                </div>
+
+                {/* Hospital Selection (only show if specific) */}
+                {requestType === 'specific' && (
+                  <CustomDropDown
+                    label="Target Hospital"
+                    value={formData.targetHospitalId || ''}
+                    options={hospitalOptions}
+                    onChange={(value) => setFormData({ ...formData, targetHospitalId: value as string })}
+                    placeholder="Select a hospital"
+                  />
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <CustomDropDown
+                    label="Urgency"
+                    value={formData.urgency}
+                    options={[
+                      { value: 'normal', label: 'Normal', description: 'Standard priority' },
+                      { value: 'urgent', label: 'Urgent', description: 'High priority' },
+                      { value: 'critical', label: 'Critical', description: 'Immediate attention' },
+                    ]}
+                    onChange={(value: any) => setFormData({ ...formData, urgency: value as any })}
+                    placeholder="Select urgency level"
+                  />
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -240,103 +348,131 @@ export default function OutgoingRequestsModal({ onClose }: OutgoingRequestsModal
                 </p>
               </div>
             ) : (
-              outgoingRequests.map((request) => (
-                <div
-                  key={request._id}
-                  className={`border-2 rounded-xl p-6 transition ${
-                    request.urgency === 'critical'
-                      ? 'border-red-300 bg-red-50'
-                      : request.status === 'matched'
-                      ? 'border-green-300 bg-green-50'
-                      : 'border-gray-200 hover:border-blue-300 hover:shadow-md'
-                  }`}
-                >
-                  {/* Request Header */}
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <Heart className="w-5 h-5 text-gray-600" />
-                        <h3 className="text-lg font-bold text-gray-900 capitalize">
-                          {request.organType} Request
-                        </h3>
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${getUrgencyColor(request.urgency)}`}>
-                          {request.urgency}
-                        </span>
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${getStatusColor(request.status)}`}>
-                          {request.status}
-                        </span>
+              outgoingRequests.map((request) => {
+                const targetHospital = request.targetHospitalId 
+                  ? hospitalMap.get(request.targetHospitalId)
+                  : null;
+
+                return (
+                  <div
+                    key={request._id}
+                    className={`border-2 rounded-xl p-6 transition ${
+                      request.urgency === 'critical'
+                        ? 'border-red-300 bg-red-50'
+                        : request.status === 'matched'
+                        ? 'border-green-300 bg-green-50'
+                        : 'border-gray-200 hover:border-blue-300 hover:shadow-md'
+                    }`}
+                  >
+                    {/* Request Header */}
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <Heart className="w-5 h-5 text-gray-600" />
+                          <h3 className="text-lg font-bold text-gray-900 capitalize">
+                            {request.organType} Request
+                          </h3>
+                          <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${getUrgencyColor(request.urgency)}`}>
+                            {request.urgency}
+                          </span>
+                          <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${getStatusColor(request.status)}`}>
+                            {request.status}
+                          </span>
+                        </div>
                       </div>
                     </div>
+
+                    {/* Target Hospital or Broadcast Badge */}
+                    <div className="mb-4">
+                      {targetHospital ? (
+                        <div className="flex items-center gap-2 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                          <Building2 className="w-4 h-4 text-purple-600" />
+                          <div className="flex-1">
+                            <p className="text-xs text-purple-700 font-medium">TARGET HOSPITAL</p>
+                            <p className="font-semibold text-purple-900">{targetHospital.hospitalName}</p>
+                            <p className="text-xs text-purple-600">{targetHospital.city}, {targetHospital.state}</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                          <Radio className="w-4 h-4 text-blue-600" />
+                          <div className="flex-1">
+                            <p className="font-semibold text-blue-900">📡 Broadcast to All Hospitals</p>
+                            <p className="text-xs text-blue-600">This request is visible to all verified hospitals</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Request Details */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 p-4 bg-white rounded-lg border border-gray-200">
+                      <div>
+                        <p className="text-xs text-gray-500 font-medium mb-1">ORGAN TYPE</p>
+                        <p className="font-semibold text-gray-900 capitalize">{request.organType}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 font-medium mb-1">BLOOD GROUP</p>
+                        <p className="font-semibold text-gray-900">{request.patientBloodGroup}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 font-medium mb-1">PATIENT AGE</p>
+                        <p className="font-semibold text-gray-900">{request.patientAge} years</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 font-medium mb-1">REQUESTED ON</p>
+                        <p className="font-semibold text-gray-900">
+                          {format(request.createdAt, 'MMM dd, yyyy')}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Additional Details */}
+                    {request.additionalDetails && (
+                      <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <p className="text-xs text-blue-700 font-medium mb-1">ADDITIONAL DETAILS</p>
+                        <p className="text-sm text-gray-700">{request.additionalDetails}</p>
+                      </div>
+                    )}
+
+                    {/* Status Message */}
+                    {request.status === 'matched' && (
+                      <div className="mb-4 p-3 bg-green-50 rounded-lg border border-green-200">
+                        <p className="text-sm text-green-800 font-medium">
+                          ✓ This request has been matched! A hospital will contact you soon.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    {request.status === 'open' && (
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => handleEdit(request)}
+                          disabled={!!editingRequest}
+                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                          Edit Request
+                        </button>
+                        <button
+                          onClick={() => handleDelete(request._id)}
+                          disabled={!!editingRequest}
+                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Delete Request
+                        </button>
+                      </div>
+                    )}
+
+                    {request.status !== 'open' && (
+                      <div className="text-center py-2 text-sm text-gray-500">
+                        This request is {request.status} and cannot be edited
+                      </div>
+                    )}
                   </div>
-
-                  {/* Request Details */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 p-4 bg-white rounded-lg border border-gray-200">
-                    <div>
-                      <p className="text-xs text-gray-500 font-medium mb-1">ORGAN TYPE</p>
-                      <p className="font-semibold text-gray-900 capitalize">{request.organType}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 font-medium mb-1">BLOOD GROUP</p>
-                      <p className="font-semibold text-gray-900">{request.patientBloodGroup}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 font-medium mb-1">PATIENT AGE</p>
-                      <p className="font-semibold text-gray-900">{request.patientAge} years</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 font-medium mb-1">REQUESTED ON</p>
-                      <p className="font-semibold text-gray-900">
-                        {format(request.createdAt, 'MMM dd, yyyy')}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Additional Details */}
-                  {request.additionalDetails && (
-                    <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                      <p className="text-xs text-blue-700 font-medium mb-1">ADDITIONAL DETAILS</p>
-                      <p className="text-sm text-gray-700">{request.additionalDetails}</p>
-                    </div>
-                  )}
-
-                  {/* Status Message */}
-                  {request.status === 'matched' && (
-                    <div className="mb-4 p-3 bg-green-50 rounded-lg border border-green-200">
-                      <p className="text-sm text-green-800 font-medium">
-                        ✓ This request has been matched! A hospital will contact you soon.
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Action Buttons */}
-                  {request.status === 'open' && (
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => handleEdit(request)}
-                        disabled={!!editingRequest}
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                        Edit Request
-                      </button>
-                      <button
-                        onClick={() => handleDelete(request._id)}
-                        disabled={!!editingRequest}
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        Delete Request
-                      </button>
-                    </div>
-                  )}
-
-                  {request.status !== 'open' && (
-                    <div className="text-center py-2 text-sm text-gray-500">
-                      This request is {request.status} and cannot be edited
-                    </div>
-                  )}
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
