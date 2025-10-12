@@ -70,7 +70,7 @@ export default function HospitalSetupForm({ onComplete }: { onComplete: () => vo
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
+    <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center mt-20">
       <div className="max-w-3xl w-full bg-white rounded-lg shadow-lg p-8">
         <div className="text-center mb-8">
           <div className="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">

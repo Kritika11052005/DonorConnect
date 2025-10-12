@@ -1116,3 +1116,23 @@ export const deleteOrganTransplantRequest = mutation({
     return true;
   },
 });
+// Add these queries to your convex/hospitals.ts file
+
+// Get single hospital by ID with user details
+export const getHospitalById = query({
+  args: { hospitalId: v.id("hospitals") },
+  handler: async (ctx, args) => {
+    const hospital = await ctx.db.get(args.hospitalId);
+    
+    if (!hospital) {
+      return null;
+    }
+
+    const user = await ctx.db.get(hospital.userId);
+
+    return {
+      ...hospital,
+      user,
+    };
+  },
+});

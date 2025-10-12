@@ -15,6 +15,7 @@ import type {
 } from "convex/server";
 import type * as bloodDonations from "../bloodDonations.js";
 import type * as donors from "../donors.js";
+import type * as hospitalRatings from "../hospitalRatings.js";
 import type * as hospitals from "../hospitals.js";
 import type * as http from "../http.js";
 import type * as metrics from "../metrics.js";
@@ -37,6 +38,7 @@ import type * as volunteers from "../volunteers.js";
 declare const fullApi: ApiFromModules<{
   bloodDonations: typeof bloodDonations;
   donors: typeof donors;
+  hospitalRatings: typeof hospitalRatings;
   hospitals: typeof hospitals;
   http: typeof http;
   metrics: typeof metrics;

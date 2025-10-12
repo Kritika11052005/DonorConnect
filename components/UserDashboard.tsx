@@ -9,7 +9,8 @@ import OrganPledgeForm from '@/components/OrganPledgeForm';
 
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-
+import HospitalDetailsModal from '@/components/HospitalDetailsModal';
+import { Id } from '@/convex/_generated/dataModel';
 import DonorProfileForm from '@/components/DonorProfileForm';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -23,7 +24,9 @@ export default function UserDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [activeTab, setActiveTab] = useState<'hospitals' | 'ngos' | 'campaigns'>('ngos');
-  
+   const [selectedHospitalId, setSelectedHospitalId] = useState<Id<"hospitals"> | null>(null);
+  const [selectedNGOId, setSelectedNGOId] = useState<Id<"ngos"> | null>(null);
+  const [selectedCampaignId, setSelectedCampaignId] = useState<Id<"fundraisingCampaigns"> | null>(null);
   // Filter states
   const [filters, setFilters] = useState({
     sortBy: 'popular' as 'popular' | 'rating' | 'recent' | 'name' | 'ending_soon' | 'amount_raised',
@@ -141,10 +144,15 @@ export default function UserDashboard() {
     });
   };
 
-  const handleViewDetails = (id: string) => {
-    console.log('View details for:', id);
-    toast.info('Details page coming soon!');
-  };
+ const handleViewDetails = (id: string) => {
+  if (activeTab === 'hospitals') {
+    setSelectedHospitalId(id as Id<"hospitals">);
+  } else if (activeTab === 'ngos') {
+    setSelectedNGOId(id as Id<"ngos">);
+  } else if (activeTab === 'campaigns') {
+    setSelectedCampaignId(id as Id<"fundraisingCampaigns">);
+  }
+};
 
   const handleEditProfile = () => {
     setIsEditMode(true);
@@ -545,6 +553,26 @@ export default function UserDashboard() {
         {activeForm === 'organ' && (
           <OrganPledgeForm onClose={() => setActiveForm(null)} />
         )}
+        {selectedHospitalId && (
+          <HospitalDetailsModal
+            hospitalId={selectedHospitalId}
+            onClose={() => setSelectedHospitalId(null)}
+          />
+        )}
+
+        {/*selectedNGOId && (
+          <NGODetailsModal
+            ngoId={selectedNGOId}
+            onClose={() => setSelectedNGOId(null)}
+          />
+        )*/}
+
+        {/*selectedCampaignId && (
+          <CampaignDetailsModal
+            campaignId={selectedCampaignId}
+            onClose={() => setSelectedCampaignId(null)}
+          />
+        )*/}
         
       </div>
     </>

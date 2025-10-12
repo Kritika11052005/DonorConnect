@@ -10,6 +10,8 @@ import IncomingRequestsModal from './IncomingRequestsModal';
 import OutgoingRequestsModal from './OutgoingRequestsModal';
 import BloodDonationsModal from './BloodDonationsModal';
 import CustomDropdown from './CustomDropDown';
+import { Id } from '@/convex/_generated/dataModel';
+import HospitalDetailsModal from './HospitalDetailsModal';
 export default function HospitalDashboard() {
   const currentHospital = useQuery(api.hospitals.getCurrentHospital);
   const availableOrgans = useQuery(api.hospitals.getHospitalOrganAvailability);
@@ -32,7 +34,7 @@ export default function HospitalDashboard() {
     city: selectedCity || undefined,
     sortBy: sortBy as any,
   });
-
+  const [selectedHospitalId, setSelectedHospitalId] = useState<Id<"hospitals"> | null>(null);
   React.useEffect(() => {
     if (currentHospital === null) {
       setShowSetupForm(true);
@@ -392,7 +394,9 @@ export default function HospitalDashboard() {
                         </div>
                       )}
                     </div>
-                    <button className="ml-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition text-sm font-medium whitespace-nowrap">
+                    <button 
+                    onClick={() => setSelectedHospitalId(hospital._id)}
+                    className="ml-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition text-sm font-medium whitespace-nowrap">
                       View Details
                     </button>
                   </div>
@@ -414,6 +418,14 @@ export default function HospitalDashboard() {
       {showBloodDonationsModal && (
         <BloodDonationsModal onClose={() => setShowBloodDonationsModal(false)} />
       )}
+      {selectedHospitalId && (
+  <HospitalDetailsModal
+    hospitalId={selectedHospitalId}
+    onClose={() => setSelectedHospitalId(null)}
+    isOwnHospital={selectedHospitalId === currentHospital?._id}
+    isHospitalUser={true}
+  />
+)}
     </div>
   );
 }
