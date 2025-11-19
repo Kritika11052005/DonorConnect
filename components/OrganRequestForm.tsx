@@ -14,6 +14,7 @@ export default function OrganRequestForm({ onClose }: { onClose: () => void }) {
   const [requestType, setRequestType] = useState<'broadcast' | 'specific'>('broadcast');
   const [formData, setFormData] = useState({
     organType: '',
+    //eslint-disable-next-line @typescript-eslint/no-explicit-any
     patientBloodGroup: 'A+' as any,
     urgency: 'normal' as 'critical' | 'urgent' | 'normal',
     patientAge: '',
@@ -52,6 +53,7 @@ export default function OrganRequestForm({ onClose }: { onClose: () => void }) {
           urgency: formData.urgency,
           patientAge: parseInt(formData.patientAge),
           additionalDetails: formData.additionalDetails || undefined,
+          //eslint-disable-next-line @typescript-eslint/no-explicit-any
           targetHospitalId: requestType === 'broadcast' ? undefined : formData.targetHospitalId as any,
         });
         toast.success('Request submitted successfully', {
@@ -80,7 +82,9 @@ export default function OrganRequestForm({ onClose }: { onClose: () => void }) {
     <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold text-gray-900">Create Organ Transplant Request</h2>
-        <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition">
+        <button 
+        aria-label="close modal"
+        onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition">
           <X className="w-5 h-5" />
         </button>
       </div>
@@ -178,7 +182,7 @@ export default function OrganRequestForm({ onClose }: { onClose: () => void }) {
               { value: 'AB-', label: 'AB- (Compatible with AB+, AB-)' },
               { value: 'O+', label: 'O+ (Compatible with O+, A+, B+, AB+)' },
               { value: 'O-', label: 'O- (Universal Donor)' },
-            ]}
+            ]}//eslint-disable-next-line @typescript-eslint/no-explicit-any
             onChange={(value) => setFormData({ ...formData, patientBloodGroup: value as any })}
             placeholder="Select blood group"
           />
@@ -190,7 +194,7 @@ export default function OrganRequestForm({ onClose }: { onClose: () => void }) {
               { value: 'normal', label: 'Normal', description: 'Standard priority' },
               { value: 'urgent', label: 'Urgent', description: 'High priority - within weeks' },
               { value: 'critical', label: 'Critical', description: 'Immediate attention required' },
-            ]}
+            ]}//eslint-disable-next-line @typescript-eslint/no-explicit-any
             onChange={(value: any) => setFormData({ ...formData, urgency: value as any })}
             placeholder="Select urgency level"
           />
@@ -200,6 +204,7 @@ export default function OrganRequestForm({ onClose }: { onClose: () => void }) {
               Patient Age <span className="text-red-600">*</span>
             </label>
             <input
+            aria-label="patient age"
               type="number"
               required
               min="0"
