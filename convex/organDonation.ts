@@ -164,6 +164,7 @@ export const revokePledge = mutation({
 });
 
 // Update organ donation pledge
+
 export const updatePledge = mutation({
   args: {
     pledgeId: v.id("organDonationRegistry"),
@@ -202,8 +203,14 @@ export const updatePledge = mutation({
       throw new Error("You can only update your own pledge");
     }
 
-    // Update pledge
-    const updateData: any = {};
+    // Update pledge with proper typing
+    const updateData: {
+      organs?: string[];
+      medicalHistory?: string;
+      emergencyContactName?: string;
+      emergencyContactPhone?: string;
+    } = {};
+    
     if (args.organs) updateData.organs = args.organs;
     if (args.medicalHistory !== undefined) updateData.medicalHistory = args.medicalHistory;
     if (args.emergencyContactName) updateData.emergencyContactName = args.emergencyContactName;

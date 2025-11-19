@@ -313,6 +313,7 @@ export default function BannerSlideShow() {
           <div className="relative bg-white rounded-2xl shadow-2xl max-w-4xl w-full p-8 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-300">
             {/* Close Button */}
             <button
+            aria-label="setShowModal"
               onClick={() => setShowModal(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1.5 transition-all"
             >

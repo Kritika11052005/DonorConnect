@@ -4,6 +4,7 @@ import { api } from '../convex/_generated/api';
 import { X } from 'lucide-react';
 import { toast } from 'sonner';
 import CustomDropDown from './CustomDropDown';
+//eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function HospitalEditForm({ hospital, onComplete, onCancel }: { hospital: any; onComplete: () => void; onCancel: () => void }) {
   const updateHospital = useMutation(api.hospitals.updateHospitalProfile);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -72,6 +73,7 @@ export default function HospitalEditForm({ hospital, onComplete, onCancel }: { h
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Edit Hospital Profile</h1>
           <button
+          aria-label="close form"
             onClick={onCancel}
             className="p-2 hover:bg-gray-100 rounded-lg transition"
           >
@@ -86,6 +88,7 @@ export default function HospitalEditForm({ hospital, onComplete, onCancel }: { h
                 Hospital Name
               </label>
               <input
+              aria-label='text'
                 type="text"
                 value={formData.hospitalName}
                 onChange={(e) => setFormData({ ...formData, hospitalName: e.target.value })}
@@ -98,6 +101,7 @@ export default function HospitalEditForm({ hospital, onComplete, onCancel }: { h
                 Description
               </label>
               <textarea
+              aria-label='desc'
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows={3}
@@ -112,7 +116,7 @@ export default function HospitalEditForm({ hospital, onComplete, onCancel }: { h
     { value: 'government', label: 'Government', description: 'Public healthcare facility' },
     { value: 'private', label: 'Private', description: 'Private healthcare facility' },
     { value: 'trust', label: 'Trust', description: 'Non-profit charitable organization' },
-  ]}
+  ]}//eslint-disable-next-line @typescript-eslint/no-explicit-any
   onChange={(value:any) => setFormData({ ...formData, hospitalType: value as any })}
   placeholder="Select hospital type"
 />
@@ -122,6 +126,7 @@ export default function HospitalEditForm({ hospital, onComplete, onCancel }: { h
                 Total Beds
               </label>
               <input
+              aria-label='number'
                 type="number"
                 value={formData.totalBeds}
                 onChange={(e) => setFormData({ ...formData, totalBeds: e.target.value })}
@@ -134,6 +139,7 @@ export default function HospitalEditForm({ hospital, onComplete, onCancel }: { h
                 Phone Number
               </label>
               <input
+              aria-label="phone"
                 type="tel"
                 value={formData.phoneNumber}
                 onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
@@ -146,6 +152,8 @@ export default function HospitalEditForm({ hospital, onComplete, onCancel }: { h
                 Address
               </label>
               <input
+
+              aria-label="address"
                 type="text"
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
@@ -158,6 +166,7 @@ export default function HospitalEditForm({ hospital, onComplete, onCancel }: { h
                 City
               </label>
               <input
+              aria-label="city"
                 type="text"
                 value={formData.city}
                 onChange={(e) => setFormData({ ...formData, city: e.target.value })}
@@ -170,6 +179,7 @@ export default function HospitalEditForm({ hospital, onComplete, onCancel }: { h
                 State
               </label>
               <input
+              aria-label="state"
                 type="text"
                 value={formData.state}
                 onChange={(e) => setFormData({ ...formData, state: e.target.value })}
@@ -182,6 +192,7 @@ export default function HospitalEditForm({ hospital, onComplete, onCancel }: { h
                 Pincode
               </label>
               <input
+              aria-label="pincode"
                 type="text"
                 value={formData.pincode}
                 onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}

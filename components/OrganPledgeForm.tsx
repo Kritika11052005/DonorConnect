@@ -97,6 +97,7 @@ export default function OrganPledgeForm({ onClose }: OrganPledgeFormProps) {
       });
 
       onClose();
+      //eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.message || 'Failed to revoke pledge');
       toast.error('Revocation Failed', {
@@ -167,6 +168,7 @@ export default function OrganPledgeForm({ onClose }: OrganPledgeFormProps) {
       }
 
       onClose();
+      //eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.message || `Failed to ${isEditMode ? 'update' : 'register'} organ donation pledge`);
       toast.error(`${isEditMode ? 'Update' : 'Registration'} Failed`, {
@@ -197,6 +199,7 @@ export default function OrganPledgeForm({ onClose }: OrganPledgeFormProps) {
             </div>
           </div>
           <button
+          aria-label="close form"
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
@@ -217,7 +220,7 @@ export default function OrganPledgeForm({ onClose }: OrganPledgeFormProps) {
               <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-semibold text-blue-900">Editing Existing Pledge</p>
-                <p className="text-sm text-blue-800">You're updating your current organ donation pledge.</p>
+                <p className="text-sm text-blue-800">You&apos;re updating your current organ donation pledge.</p>
               </div>
             </div>
           )}

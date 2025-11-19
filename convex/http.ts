@@ -6,6 +6,15 @@ import { httpAction } from "./_generated/server";
 
 const http = httpRouter();
 
+// Type for user roles
+type UserRole = "donor" | "admin" | "hospital" | "ngo";
+
+// Type for unsafe_metadata with role
+interface UnsafeMetadata {
+  role?: UserRole;
+  [key: string]: unknown;
+}
+
 http.route({
   path: "/clerk-webhook",
   method: "POST",
@@ -53,7 +62,10 @@ http.route({
 
       const email = email_addresses[0]?.email_address;
       const name = `${first_name || ""} ${last_name || ""}`.trim() || "User";
-      const role = (unsafe_metadata as any)?.role || "donor";
+      
+      // Type-safe handling of unsafe_metadata
+      const metadata = unsafe_metadata as UnsafeMetadata | undefined;
+      const role: UserRole = metadata?.role || "donor";
 
       try {
         await ctx.runMutation(internal.users.createUser, {

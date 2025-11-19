@@ -96,6 +96,7 @@ export default function DatePicker({
             {/* Month Navigation */}
             <div className="flex items-center justify-between mb-4">
               <button
+              aria-label="previous month"
                 type="button"
                 onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
                 className="p-2 hover:bg-gray-100 rounded-lg transition"
@@ -106,6 +107,7 @@ export default function DatePicker({
                 {format(currentMonth, 'MMMM yyyy')}
               </h3>
               <button
+              aria-label='button'
                 type="button"
                 onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
                 className="p-2 hover:bg-gray-100 rounded-lg transition"

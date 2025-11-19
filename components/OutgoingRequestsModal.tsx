@@ -17,7 +17,7 @@ export default function OutgoingRequestsModal({ onClose }: OutgoingRequestsModal
   const hospitals = useQuery(api.hospitals.getOtherHospitals);
   const updateRequest = useMutation(api.hospitals.updateOrganTransplantRequest);
   const deleteRequest = useMutation(api.hospitals.deleteOrganTransplantRequest);
-
+//eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [editingRequest, setEditingRequest] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [requestType, setRequestType] = useState<'broadcast' | 'specific'>('broadcast');
@@ -29,6 +29,7 @@ export default function OutgoingRequestsModal({ onClose }: OutgoingRequestsModal
   });
 
   // Map to store hospital details for display
+  //eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [hospitalMap, setHospitalMap] = useState<Map<string, any>>(new Map());
 
   useEffect(() => {
@@ -49,7 +50,7 @@ export default function OutgoingRequestsModal({ onClose }: OutgoingRequestsModal
     setEditingRequest(null);
     setRequestType('broadcast');
   };
-
+//eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleEdit = (request: any) => {
     setEditingRequest(request);
     setRequestType(request.targetHospitalId ? 'specific' : 'broadcast');
@@ -108,6 +109,7 @@ export default function OutgoingRequestsModal({ onClose }: OutgoingRequestsModal
         onClick: async () => {
           const loadingToast = toast.loading('Deleting request...');
           try {
+            //eslint-disable-next-line @typescript-eslint/no-explicit-any
             await deleteRequest({ requestId: requestId as any });
             toast.success('Request deleted successfully', {
               id: loadingToast,
@@ -174,6 +176,7 @@ export default function OutgoingRequestsModal({ onClose }: OutgoingRequestsModal
             </div>
           </div>
           <button
+          aria-label="close modal"
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition"
           >
@@ -281,7 +284,7 @@ export default function OutgoingRequestsModal({ onClose }: OutgoingRequestsModal
                       { value: 'normal', label: 'Normal', description: 'Standard priority' },
                       { value: 'urgent', label: 'Urgent', description: 'High priority' },
                       { value: 'critical', label: 'Critical', description: 'Immediate attention' },
-                    ]}
+                    ]}//eslint-disable-next-line @typescript-eslint/no-explicit-any
                     onChange={(value: any) => setFormData({ ...formData, urgency: value as any })}
                     placeholder="Select urgency level"
                   />
@@ -291,6 +294,7 @@ export default function OutgoingRequestsModal({ onClose }: OutgoingRequestsModal
                       Patient Age <span className="text-red-600">*</span>
                     </label>
                     <input
+                    aria-label="patient age"
                       type="number"
                       required
                       min="0"

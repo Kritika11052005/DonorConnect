@@ -13,7 +13,9 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as admin from "../admin.js";
 import type * as bloodDonations from "../bloodDonations.js";
+import type * as donation from "../donation.js";
 import type * as donors from "../donors.js";
 import type * as hospitalRatings from "../hospitalRatings.js";
 import type * as hospitals from "../hospitals.js";
@@ -21,7 +23,9 @@ import type * as http from "../http.js";
 import type * as metrics from "../metrics.js";
 import type * as ngos from "../ngos.js";
 import type * as organDonation from "../organDonation.js";
+import type * as payments from "../payments.js";
 import type * as popularityScores from "../popularityScores.js";
+import type * as receipt from "../receipt.js";
 import type * as search from "../search.js";
 import type * as stats from "../stats.js";
 import type * as users from "../users.js";
@@ -36,7 +40,9 @@ import type * as volunteers from "../volunteers.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  admin: typeof admin;
   bloodDonations: typeof bloodDonations;
+  donation: typeof donation;
   donors: typeof donors;
   hospitalRatings: typeof hospitalRatings;
   hospitals: typeof hospitals;
@@ -44,7 +50,9 @@ declare const fullApi: ApiFromModules<{
   metrics: typeof metrics;
   ngos: typeof ngos;
   organDonation: typeof organDonation;
+  payments: typeof payments;
   popularityScores: typeof popularityScores;
+  receipt: typeof receipt;
   search: typeof search;
   stats: typeof stats;
   users: typeof users;

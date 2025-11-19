@@ -15,6 +15,7 @@ import { format, addDays } from 'date-fns';
 import 'react-day-picker/dist/style.css';
 import { useUser, useAuth, SignInButton } from '@clerk/nextjs';
 import { toast } from 'sonner';
+import { Id } from '@/convex/_generated/dataModel';
 
 interface BloodDonationFormProps {
   onClose: () => void;
@@ -154,7 +155,7 @@ export default function BloodDonationForm({ onClose }: BloodDonationFormProps) {
         medicalConditions: formData.medicalConditions || '',
         availableDays: formData.availableDays,
         scheduleAppointment: formData.scheduleAppointment,
-        preferredHospitalId: formData.scheduleAppointment ? formData.preferredHospitalId as any : undefined,
+        preferredHospitalId: formData.scheduleAppointment ? formData.preferredHospitalId as Id<"hospitals"> : undefined,
         scheduledDate: formData.scheduledDate?.getTime(),
         scheduledTime: formData.scheduledTime || '',
         appointmentNotes: formData.appointmentNotes || '',
@@ -162,10 +163,11 @@ export default function BloodDonationForm({ onClose }: BloodDonationFormProps) {
 
       toast.success('Successfully signed up for blood donation!');
       onClose();
-    } catch (error: any) {
-      console.error('Error submitting form:', error);
-      toast.error(error?.message || 'Failed to submit form. Please try again.');
-    } finally {
+   } catch (error: unknown) {
+  console.error('Error submitting form:', error);
+  const errorMessage = error instanceof Error ? error.message : 'Failed to submit form. Please try again.';
+  toast.error(errorMessage);
+} finally {
       setIsSubmitting(false);
     }
   };
@@ -211,7 +213,7 @@ export default function BloodDonationForm({ onClose }: BloodDonationFormProps) {
               </div>
               <h2 className="text-xl font-bold text-white">Authentication Required</h2>
             </div>
-            <button onClick={onClose} className="text-white/80 hover:text-white transition-colors">
+            <button  aria-label="onclose" onClick={onClose} className="text-white/80 hover:text-white transition-colors">
               <X className="w-6 h-6" />
             </button>
           </div>
@@ -338,7 +340,7 @@ export default function BloodDonationForm({ onClose }: BloodDonationFormProps) {
             </div>
             <h2 className="text-2xl font-bold text-white">Blood Donation Sign-Up</h2>
           </div>
-          <button onClick={onClose} className="text-white/80 hover:text-white transition-colors">
+          <button aria-label="onclose" onClick={onClose} className="text-white/80 hover:text-white transition-colors">
             <X className="w-6 h-6" />
           </button>
         </div>

@@ -77,7 +77,7 @@ export default function HospitalSetupForm({ onComplete }: { onComplete: () => vo
             <Building2 className="w-8 h-8 text-red-600" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900">Welcome to DonorConnect</h1>
-          <p className="text-gray-600 mt-2">Let's set up your hospital profile</p>
+          <p className="text-gray-600 mt-2">Let&apos;s set up your hospital profile</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -87,6 +87,7 @@ export default function HospitalSetupForm({ onComplete }: { onComplete: () => vo
                 Hospital Name <span className="text-red-600">*</span>
               </label>
               <input
+              aria-label="hospital name"
                 type="text"
                 required
                 value={formData.hospitalName}
@@ -100,6 +101,7 @@ export default function HospitalSetupForm({ onComplete }: { onComplete: () => vo
                 Description
               </label>
               <textarea
+              aria-label="description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows={3}
@@ -112,6 +114,7 @@ export default function HospitalSetupForm({ onComplete }: { onComplete: () => vo
                 Registration Number <span className="text-red-600">*</span>
               </label>
               <input
+              aria-label="reg number"
                 type="text"
                 required
                 value={formData.registrationNumber}
@@ -125,8 +128,10 @@ export default function HospitalSetupForm({ onComplete }: { onComplete: () => vo
                 Hospital Type <span className="text-red-600">*</span>
               </label>
               <select
+              aria-label="hospital type"
                 required
                 value={formData.hospitalType}
+                //eslint-disable-next-line @typescript-eslint/no-explicit-any
                 onChange={(e) => setFormData({ ...formData, hospitalType: e.target.value as any })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
               >
@@ -141,6 +146,7 @@ export default function HospitalSetupForm({ onComplete }: { onComplete: () => vo
                 Total Beds
               </label>
               <input
+              aria-label="total beds"
                 type="number"
                 value={formData.totalBeds}
                 onChange={(e) => setFormData({ ...formData, totalBeds: e.target.value })}
@@ -153,6 +159,7 @@ export default function HospitalSetupForm({ onComplete }: { onComplete: () => vo
                 Phone Number <span className="text-red-600">*</span>
               </label>
               <input
+              aria-label="tel"
                 type="tel"
                 required
                 value={formData.phoneNumber}
@@ -166,6 +173,7 @@ export default function HospitalSetupForm({ onComplete }: { onComplete: () => vo
                 Address
               </label>
               <input
+              aria-label="address"
                 type="text"
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
@@ -178,6 +186,7 @@ export default function HospitalSetupForm({ onComplete }: { onComplete: () => vo
                 City
               </label>
               <input
+              aria-label="city"
                 type="text"
                 value={formData.city}
                 onChange={(e) => setFormData({ ...formData, city: e.target.value })}
@@ -190,6 +199,7 @@ export default function HospitalSetupForm({ onComplete }: { onComplete: () => vo
                 State
               </label>
               <input
+              aria-label="state"
                 type="text"
                 value={formData.state}
                 onChange={(e) => setFormData({ ...formData, state: e.target.value })}
@@ -202,6 +212,7 @@ export default function HospitalSetupForm({ onComplete }: { onComplete: () => vo
                 Pincode
               </label>
               <input
+              aria-label="pincode"
                 type="text"
                 value={formData.pincode}
                 onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}

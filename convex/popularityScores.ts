@@ -1,5 +1,5 @@
 // convex/popularityScores.ts
-import { mutation, internalMutation } from "./_generated/server";
+import { mutation, internalMutation ,query} from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 
@@ -408,5 +408,67 @@ export const updateAllPopularityScores = internalMutation({
     }
 
     return { success: true };
+  },
+});
+/**
+ * Get popular causes from verified NGOs and active campaigns
+ */
+export const getPopularCauses = query({
+  args: {},
+  handler: async (ctx) => {
+    // Get all verified NGOs
+    const ngos = await ctx.db
+      .query("ngos")
+      .withIndex("by_verified", (q) => q.eq("verified", true))
+      .collect();
+
+    // Get all active campaigns from verified NGOs
+    const allCampaigns = await ctx.db
+      .query("fundraisingCampaigns")
+      .filter((q) => q.eq(q.field("status"), "active"))
+      .collect();
+
+    // Filter campaigns to only include those from verified NGOs
+    const verifiedNgoIds = new Set(ngos.map(ngo => ngo._id));
+    const campaigns = allCampaigns.filter(campaign => 
+      verifiedNgoIds.has(campaign.ngoId)
+    );
+
+    // Collect all categories/causes
+    const allCauses: string[] = [];
+    
+    // Add NGO categories
+    ngos.forEach((ngo) => {
+      if (ngo.categories && Array.isArray(ngo.categories)) {
+        allCauses.push(...ngo.categories);
+      }
+    });
+
+    // Add campaign category (campaigns have a single 'category' string field)
+    campaigns.forEach((campaign) => {
+      if (campaign.category) {
+        allCauses.push(campaign.category);
+      }
+    });
+
+    // Count occurrences of each cause (case-insensitive)
+    const causeCount: Record<string, number> = {};
+    allCauses.forEach((cause) => {
+      const normalizedCause = cause.trim().toLowerCase();
+      if (normalizedCause) {
+        causeCount[normalizedCause] = (causeCount[normalizedCause] || 0) + 1;
+      }
+    });
+
+    // Sort by count and return top causes with proper capitalization
+    const popularCauses = Object.entries(causeCount)
+      .map(([cause, count]) => ({
+        cause: cause.charAt(0).toUpperCase() + cause.slice(1), // Capitalize first letter
+        count,
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10); // Get top 10 causes
+
+    return popularCauses;
   },
 });

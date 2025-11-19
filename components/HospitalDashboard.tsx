@@ -32,6 +32,7 @@ export default function HospitalDashboard() {
   const searchResults = useQuery(api.hospitals.searchHospitals, {
     searchTerm: searchTerm || undefined,
     city: selectedCity || undefined,
+    //eslint-disable-next-line @typescript-eslint/no-explicit-any
     sortBy: sortBy as any,
   });
   const [selectedHospitalId, setSelectedHospitalId] = useState<Id<"hospitals"> | null>(null);
@@ -385,7 +386,9 @@ export default function HospitalDashboard() {
                         <div className="mt-3 pt-3 border-t border-red-200">
                           <p className="text-sm font-medium text-red-700 mb-2">Critical Needs:</p>
                           <div className="flex flex-wrap gap-2">
-                            {hospital.urgentRequests.map((req: any) => (
+                            
+                            {//eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            hospital.urgentRequests.map((req: any) => (
                               <span key={req._id} className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-medium">
                                 {req.organType} ({req.patientBloodGroup})
                               </span>

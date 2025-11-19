@@ -170,7 +170,8 @@ export const createHospitalProfile = mutation({
   },
 });
 
-// Update hospital profile
+
+// Update hospital profile - FIXED
 export const updateHospitalProfile = mutation({
   args: {
     hospitalId: v.id("hospitals"),
@@ -205,7 +206,15 @@ export const updateHospitalProfile = mutation({
       throw new Error("Unauthorized");
     }
 
-    const hospitalUpdate: any = {};
+    // Properly typed hospital update object
+    const hospitalUpdate: {
+      hospitalName?: string;
+      description?: string;
+      hospitalType?: "government" | "private" | "trust";
+      totalBeds?: number;
+      specializations?: string[];
+    } = {};
+    
     if (args.hospitalName) hospitalUpdate.hospitalName = args.hospitalName;
     if (args.description) hospitalUpdate.description = args.description;
     if (args.hospitalType) hospitalUpdate.hospitalType = args.hospitalType;
@@ -214,7 +223,16 @@ export const updateHospitalProfile = mutation({
 
     await ctx.db.patch(args.hospitalId, hospitalUpdate);
 
-    const userUpdate: any = {};
+    // Properly typed user update object
+    const userUpdate: {
+      name?: string;
+      phoneNumber?: string;
+      address?: string;
+      city?: string;
+      state?: string;
+      pincode?: string;
+    } = {};
+    
     if (args.hospitalName) userUpdate.name = args.hospitalName;
     if (args.phoneNumber) userUpdate.phoneNumber = args.phoneNumber;
     if (args.address) userUpdate.address = args.address;
@@ -728,6 +746,7 @@ export const addOrganAvailability = mutation({
 });
 
 // Update organ availability
+// Update organ availability - FIXED
 export const updateOrganAvailability = mutation({
   args: {
     organId: v.id("hospitalOrganAvailability"),
@@ -770,7 +789,15 @@ export const updateOrganAvailability = mutation({
       throw new Error("Unauthorized");
     }
 
-    const updates: any = { updatedAt: Date.now() };
+    // Properly typed updates object
+    const updates: {
+      updatedAt: number;
+      quantity?: number;
+      availableUntil?: number;
+      status?: "available" | "allocated" | "transplanted" | "expired";
+      notes?: string;
+    } = { updatedAt: Date.now() };
+    
     if (args.quantity !== undefined) updates.quantity = args.quantity;
     if (args.availableUntil) updates.availableUntil = args.availableUntil;
     if (args.status) updates.status = args.status;
@@ -1022,6 +1049,7 @@ export const rejectOrganRequest = mutation({
     return args.requestId;
   },
 });
+// Update organ transplant request - FIXED
 export const updateOrganTransplantRequest = mutation({
   args: {
     requestId: v.id("organTransplantRequests"),
@@ -1062,7 +1090,13 @@ export const updateOrganTransplantRequest = mutation({
       throw new Error("Cannot edit a request that is not open");
     }
 
-    const updates: any = {};
+    // Properly typed updates object
+    const updates: {
+      urgency?: "critical" | "urgent" | "normal";
+      patientAge?: number;
+      additionalDetails?: string;
+    } = {};
+    
     if (args.urgency !== undefined) updates.urgency = args.urgency;
     if (args.patientAge !== undefined) updates.patientAge = args.patientAge;
     if (args.additionalDetails !== undefined) updates.additionalDetails = args.additionalDetails;

@@ -11,6 +11,7 @@ interface FilterPanelProps {
     minRating: number;
     hospitalType: '' | 'government' | 'private' | 'trust';
   };
+  //eslint-disable-next-line @typescript-eslint/no-explicit-any
   onFilterChange: (filters: any) => void;
   onReset: () => void;
   availableCities?: string[];

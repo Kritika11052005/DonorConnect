@@ -17,6 +17,7 @@ export default function BloodDonationsModal({ onClose }: BloodDonationsModalProp
   const updateAppointment = useMutation(api.bloodDonations.updateBloodDonationAppointment);
 
   const [activeTab, setActiveTab] = useState<'all' | 'scheduled' | 'completed' | 'missed' | 'cancelled'>('all');
+  //eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [editingAppointment, setEditingAppointment] = useState<any>(null);
   const [showCompletionDialog, setShowCompletionDialog] = useState<string | null>(null);
   const [showMissedDialog, setShowMissedDialog] = useState<string | null>(null);
@@ -32,6 +33,7 @@ export default function BloodDonationsModal({ onClose }: BloodDonationsModalProp
     completedAt: '',
     completedTime: '',
     notes: '',
+    //eslint-disable-next-line @typescript-eslint/no-explicit-any
     status: 'completed' as any,
   });
 
@@ -51,7 +53,7 @@ export default function BloodDonationsModal({ onClose }: BloodDonationsModalProp
         return 'bg-gray-100 text-gray-700 border-gray-300';
     }
   };
-
+//eslint-disable-next-line @typescript-eslint/no-explicit-any
   const filteredAppointments = appointments?.filter((apt: any) => {
     if (activeTab === 'all') return true;
     return apt.status === activeTab;
@@ -59,9 +61,13 @@ export default function BloodDonationsModal({ onClose }: BloodDonationsModalProp
 
   const statusCounts = {
     all: appointments?.length || 0,
+    //eslint-disable-next-line @typescript-eslint/no-explicit-any
     scheduled: appointments?.filter((a: any) => a.status === 'scheduled').length || 0,
+    //eslint-disable-next-line @typescript-eslint/no-explicit-any
     completed: appointments?.filter((a: any) => a.status === 'completed').length || 0,
+    //eslint-disable-next-line @typescript-eslint/no-explicit-any
     missed: appointments?.filter((a: any) => a.status === 'missed').length || 0,
+    //eslint-disable-next-line @typescript-eslint/no-explicit-any
     cancelled: appointments?.filter((a: any) => a.status === 'cancelled').length || 0,
   };
 
@@ -73,6 +79,7 @@ export default function BloodDonationsModal({ onClose }: BloodDonationsModalProp
         : Date.now();
 
       await completeAppointment({
+        //eslint-disable-next-line @typescript-eslint/no-explicit-any
         appointmentId: appointmentId as any,
         completedAt: completedDateTime,
         notes: completionForm.notes || undefined,
@@ -97,6 +104,7 @@ export default function BloodDonationsModal({ onClose }: BloodDonationsModalProp
     setIsSubmitting(true);
     try {
       await markAsMissed({
+        //eslint-disable-next-line @typescript-eslint/no-explicit-any
         appointmentId: appointmentId as any,
         notes: missedNotes || undefined,
       });
@@ -112,7 +120,7 @@ export default function BloodDonationsModal({ onClose }: BloodDonationsModalProp
       setIsSubmitting(false);
     }
   };
-
+//eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleEdit = (appointment: any) => {
     setEditingAppointment(appointment);
     if (appointment.completedAt) {
@@ -187,6 +195,7 @@ export default function BloodDonationsModal({ onClose }: BloodDonationsModalProp
             </div>
           </div>
           <button
+          aria-label='close'
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition"
           >
@@ -206,6 +215,7 @@ export default function BloodDonationsModal({ onClose }: BloodDonationsModalProp
             ].map((tab) => (
               <button
                 key={tab.key}
+                //eslint-disable-next-line @typescript-eslint/no-explicit-any
                 onClick={() => setActiveTab(tab.key as any)}
                 className={`px-4 py-3 font-medium text-sm border-b-2 transition whitespace-nowrap ${
                   activeTab === tab.key
@@ -280,6 +290,7 @@ export default function BloodDonationsModal({ onClose }: BloodDonationsModalProp
 
                     {(appointment.status === 'completed' || appointment.status === 'missed') && (
                       <button
+                      aria-label="edit"
                         onClick={() => handleEdit(appointment)}
                         className="p-2 hover:bg-gray-100 rounded-lg transition"
                       >
@@ -372,6 +383,7 @@ export default function BloodDonationsModal({ onClose }: BloodDonationsModalProp
                             Completion Time
                           </label>
                           <input
+                          aria-label="completion time"
                             type="time"
                             value={completionForm.completedTime}
                             onChange={(e) => setCompletionForm({ ...completionForm, completedTime: e.target.value })}
@@ -456,6 +468,7 @@ export default function BloodDonationsModal({ onClose }: BloodDonationsModalProp
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-bold text-gray-900">Edit Appointment</h3>
                 <button
+                aria-label="close"
                   onClick={() => setEditingAppointment(null)}
                   className="p-2 hover:bg-gray-100 rounded-lg transition"
                 >
@@ -473,6 +486,7 @@ export default function BloodDonationsModal({ onClose }: BloodDonationsModalProp
     { value: 'missed', label: 'Missed', description: 'Donor did not show up' },
     { value: 'cancelled', label: 'Cancelled', description: 'Appointment was cancelled' },
   ]}
+  //eslint-disable-next-line @typescript-eslint/no-explicit-any
   onChange={(value:any) => setEditForm({ ...editForm, status: value as any })}
   placeholder="Select status"
 />
@@ -492,6 +506,7 @@ export default function BloodDonationsModal({ onClose }: BloodDonationsModalProp
                           Completion Time
                         </label>
                         <input
+                        aria-label="completion time"
                           type="time"
                           value={editForm.completedTime}
                           onChange={(e) => setEditForm({ ...editForm, completedTime: e.target.value })}
@@ -507,6 +522,7 @@ export default function BloodDonationsModal({ onClose }: BloodDonationsModalProp
                     Notes
                   </label>
                   <textarea
+                  aria-label="notes"
                     value={editForm.notes}
                     onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
                     rows={3}

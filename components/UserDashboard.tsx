@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 import BloodDonationForm from '@/components/BloodDonationForm';
 import VolunteerForm from '@/components/VolunteerForm';
 import OrganPledgeForm from '@/components/OrganPledgeForm';
-
+import PopularCausesFilter from '@/components/PopularCausesFilter';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import HospitalDetailsModal from '@/components/HospitalDetailsModal';
@@ -17,7 +17,12 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import FilterPanel from '@/components/FilterPanel';
 import ResultCard from '@/components/ResultCard';
-
+import NGODetailsModal from '@/components/NGODetailsModal';
+import CampaignDetailsModal from '@/components/CampaignDetailsModal';
+interface SearchResult {
+  _id: string;
+  [key: string]: unknown;
+}
 export default function UserDashboard() {
   const { user, isLoaded } = useUser();
   const [activeForm, setActiveForm] = useState<'blood' | 'volunteer' | 'organ' | null>(null);
@@ -25,8 +30,9 @@ export default function UserDashboard() {
   const [showFilters, setShowFilters] = useState(false);
   const [activeTab, setActiveTab] = useState<'hospitals' | 'ngos' | 'campaigns'>('ngos');
    const [selectedHospitalId, setSelectedHospitalId] = useState<Id<"hospitals"> | null>(null);
+  
   const [selectedNGOId, setSelectedNGOId] = useState<Id<"ngos"> | null>(null);
-  const [selectedCampaignId, setSelectedCampaignId] = useState<Id<"fundraisingCampaigns"> | null>(null);
+const [selectedCampaignId, setSelectedCampaignId] = useState<Id<"fundraisingCampaigns"> | null>(null);
   // Filter states
   const [filters, setFilters] = useState({
     sortBy: 'popular' as 'popular' | 'rating' | 'recent' | 'name' | 'ending_soon' | 'amount_raised',
@@ -357,7 +363,7 @@ export default function UserDashboard() {
               return (
                 <button
                   key={card.id}
-                  onClick={() => setActiveForm(card.id as any)}
+                  onClick={() => setActiveForm(card.id as 'blood' | 'volunteer' | 'organ')}
                   className="group relative bg-white rounded-3xl p-8 border-2 border-gray-100 hover:border-transparent transition-all transform hover:scale-105 hover:shadow-2xl text-left overflow-hidden"
                 >
                   <div className={`absolute inset-0 bg-gradient-to-br ${card.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
@@ -459,7 +465,7 @@ export default function UserDashboard() {
                   return (
                     <button
                       key={tab.id}
-                      onClick={() => setActiveTab(tab.id as any)}
+                      onClick={() =>setActiveTab(tab.id as 'hospitals' | 'ngos' | 'campaigns')}
                       className={`flex items-center gap-2 px-6 py-3 font-semibold transition-all border-b-2 ${
                         activeTab === tab.id
                           ? 'text-rose-500 border-rose-500'
@@ -493,7 +499,7 @@ export default function UserDashboard() {
 
             <div className="space-y-4 mb-8 max-h-[600px] overflow-y-auto pr-2">
               {activeResults && activeResults.results.length > 0 ? (
-                activeResults.results.map((result: any) => (
+                activeResults.results.map((result: SearchResult) => (
                   <ResultCard
                     key={result._id}
                     result={result}
@@ -560,20 +566,20 @@ export default function UserDashboard() {
           />
         )}
 
-        {/*selectedNGOId && (
-          <NGODetailsModal
-            ngoId={selectedNGOId}
-            onClose={() => setSelectedNGOId(null)}
-          />
-        )*/}
-
-        {/*selectedCampaignId && (
-          <CampaignDetailsModal
-            campaignId={selectedCampaignId}
-            onClose={() => setSelectedCampaignId(null)}
-          />
-        )*/}
         
+        {selectedNGOId && (
+  <NGODetailsModal
+    ngoId={selectedNGOId}
+    onClose={() => setSelectedNGOId(null)}
+  />
+)}
+
+{selectedCampaignId && (
+  <CampaignDetailsModal
+    campaignId={selectedCampaignId}
+    onClose={() => setSelectedCampaignId(null)}
+  />
+)}
       </div>
     </>
   );

@@ -1,5 +1,4 @@
-// Create this as: components/OrganDetailsModal.tsx
-
+// components/OrganDetailsModal.tsx
 import React, { useState } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../convex/_generated/api';
@@ -19,11 +18,13 @@ export default function OrganDetailsModal({ onClose }: OrganDetailsModalProps) {
   const deleteOrgan = useMutation(api.hospitals.deleteOrganAvailability);
 
   const [showAddForm, setShowAddForm] = useState(false);
+  //eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [editingOrgan, setEditingOrgan] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
     organType: '',
+    //eslint-disable-next-line @typescript-eslint/no-explicit-any
     bloodGroup: 'A+' as any,
     quantity: '1',
     availableUntil: '',
@@ -86,7 +87,7 @@ export default function OrganDetailsModal({ onClose }: OrganDetailsModalProps) {
     setIsSubmitting(false);
   }
 };
-
+//eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleEdit = (record: any) => {
     setEditingOrgan(record);
     setFormData({
@@ -108,6 +109,7 @@ export default function OrganDetailsModal({ onClose }: OrganDetailsModalProps) {
       onClick: async () => {
         const loadingToast = toast.loading('Deleting organ...');
         try {
+          //eslint-disable-next-line @typescript-eslint/no-explicit-any
           await deleteOrgan({ organId: organId as any });
           toast.success('Organ deleted successfully', {
             id: loadingToast,
@@ -142,6 +144,7 @@ export default function OrganDetailsModal({ onClose }: OrganDetailsModalProps) {
             </div>
           </div>
           <button
+          aria-label="close modal"
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition"
           >
@@ -191,6 +194,7 @@ export default function OrganDetailsModal({ onClose }: OrganDetailsModalProps) {
     { value: 'O+', label: 'O+' },
     { value: 'O-', label: 'O-' },
   ]}
+  //eslint-disable-next-line @typescript-eslint/no-explicit-any
   onChange={(value) => setFormData({ ...formData, bloodGroup: value as any })}
   placeholder="Select blood group"
   
@@ -201,6 +205,7 @@ export default function OrganDetailsModal({ onClose }: OrganDetailsModalProps) {
                       Quantity <span className="text-red-600">*</span>
                     </label>
                     <input
+                    aria-label="quantity"
                       type="number"
                       required
                       min="1"
@@ -223,6 +228,7 @@ export default function OrganDetailsModal({ onClose }: OrganDetailsModalProps) {
                       Donor Age (Optional)
                     </label>
                     <input
+                    aria-label="donor age"
                       type="number"
                       disabled={!!editingOrgan}
                       min="0"
@@ -238,6 +244,7 @@ export default function OrganDetailsModal({ onClose }: OrganDetailsModalProps) {
                       Notes (Optional)
                     </label>
                     <textarea
+                    aria-label="notes"
                       value={formData.notes}
                       onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                       rows={2}
@@ -272,7 +279,7 @@ export default function OrganDetailsModal({ onClose }: OrganDetailsModalProps) {
               <div className="text-center py-8 text-gray-500">Loading organs...</div>
             ) : organDetails.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                No organs available. Click "Add Organ" to add one.
+                No organs available. Click &quot;Add Organ&ldquot; to add one.
               </div>
             ) : (
               organDetails.map((group, index) => (
@@ -310,7 +317,9 @@ export default function OrganDetailsModal({ onClose }: OrganDetailsModalProps) {
 
                   {/* Individual Records */}
                   <div className="space-y-2">
-                    {group.records.map((record: any) => (
+                    
+                    {//eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    group.records.map((record: any) => (
                       <div
                         key={record._id}
                         className="flex items-center justify-between bg-gray-50 p-3 rounded-lg"
@@ -352,6 +361,7 @@ export default function OrganDetailsModal({ onClose }: OrganDetailsModalProps) {
                               <Edit2 className="w-4 h-4 text-gray-600" />
                             </button>
                             <button
+                            aria-label="delete organ"
                               onClick={() => handleDelete(record._id)}
                               className="p-2 hover:bg-red-100 rounded-lg transition"
                             >

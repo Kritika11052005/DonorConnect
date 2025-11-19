@@ -26,6 +26,7 @@ export default function IncomingRequestsModal({ onClose }: IncomingRequestsModal
     setAcceptingId(requestId);
     try {
   await acceptRequest({
+    //eslint-disable-next-line @typescript-eslint/no-explicit-any
     requestId: requestId as any,
     message: acceptMessage || undefined,
   });
@@ -43,6 +44,7 @@ export default function IncomingRequestsModal({ onClose }: IncomingRequestsModal
     setRejectingId(requestId);
     try {
   await rejectRequest({
+    //eslint-disable-next-line @typescript-eslint/no-explicit-any
     requestId: requestId as any,
     reason: rejectReason || undefined,
   });
@@ -84,6 +86,7 @@ export default function IncomingRequestsModal({ onClose }: IncomingRequestsModal
             </div>
           </div>
           <button
+          aria-label="close modal"
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition"
           >

@@ -91,6 +91,7 @@ export default function HospitalDetailsModal({
       setShowRatingModal(false);
       setSelectedRating(0);
       setReview('');
+      //eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       toast.error(error.message || 'Failed to submit rating');
     } finally {
@@ -136,6 +137,7 @@ export default function HospitalDetailsModal({
       <div className="flex items-center justify-center gap-2">
         {[1, 2, 3, 4, 5].map((star) => (
           <button
+          aria-label="star rating"
             key={star}
             type="button"
             onClick={() => setSelectedRating(star)}
@@ -186,6 +188,7 @@ export default function HospitalDetailsModal({
           {/* Header with Hero Section */}
           <div className="relative bg-gradient-to-r from-rose-500 to-pink-500 px-6 py-8">
             <button
+            aria-label="close modal"
               onClick={onClose}
               className="absolute top-4 right-4 p-2 bg-white/20 hover:bg-white/30 rounded-full transition-colors"
             >

@@ -169,8 +169,8 @@ export default function DonorProfileForm({ userId, onComplete, isEditMode = fals
                 state: formData.state,
                 pincode: formData.pincode,
                 dateOfBirth: format(formData.dateOfBirth!, 'yyyy-MM-dd'),
-                bloodGroup: formData.bloodGroup as any,
-                gender: formData.gender as any,
+                bloodGroup: formData.bloodGroup as "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-",
+                gender: formData.gender as "male" | "female" | "other",
             });
             
             toast.success(
@@ -230,6 +230,7 @@ export default function DonorProfileForm({ userId, onComplete, isEditMode = fals
                         </div>
                         {isEditMode && (
                             <button
+                            aria-label="onComplete"
                                 onClick={onComplete}
                                 className="text-white hover:bg-white/20 rounded-full p-2 transition-colors"
                             >
@@ -323,6 +324,7 @@ export default function DonorProfileForm({ userId, onComplete, isEditMode = fals
                                         {/* Month dropdown */}
                                         <div className="relative flex-1">
                                             <select
+                                            aria-label="Select month"
                                                 value={formData.dateOfBirth ? formData.dateOfBirth.getMonth() : new Date().getMonth()}
                                                 onChange={(e) => {
                                                     const newDate = new Date(formData.dateOfBirth || new Date());
@@ -344,6 +346,7 @@ export default function DonorProfileForm({ userId, onComplete, isEditMode = fals
                                         {/* Year dropdown */}
                                         <div className="relative flex-1">
                                             <select
+                                            aria-label="Select year"
                                                 value={formData.dateOfBirth ? formData.dateOfBirth.getFullYear() : new Date().getFullYear()}
                                                 onChange={(e) => {
                                                     const newDate = new Date(formData.dateOfBirth || new Date());

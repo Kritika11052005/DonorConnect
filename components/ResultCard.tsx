@@ -5,8 +5,10 @@ import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { toast } from 'sonner';
 import { useUser } from '@clerk/nextjs';
+import DonationModal from '@/components/DonationModal';
 
 interface ResultCardProps {
+  //eslint-disable-next-line @typescript-eslint/no-explicit-any
   result: any;
   type: 'hospital' | 'ngo' | 'campaign';
   onViewDetails: (id: string) => void;
@@ -19,6 +21,8 @@ export default function ResultCard({ result, type, onViewDetails }: ResultCardPr
   const [selectedRating, setSelectedRating] = useState(0);
   const [review, setReview] = useState('');
   const [showDonateDropdown, setShowDonateDropdown] = useState(false);
+  const [showDonationModal, setShowDonationModal] = useState(false);
+  const [selectedDonationType, setSelectedDonationType] = useState<'money' | 'books' | 'clothes' | 'food'>('money');
 
   // Mutations for rating - using popularityScores functions
   const rateHospital = useMutation(api.popularityScores.submitHospitalRating);
@@ -71,11 +75,12 @@ export default function ResultCard({ result, type, onViewDetails }: ResultCardPr
       setShowRatingModal(false);
       setSelectedRating(0);
       setReview('');
-      
+
       // Optionally refresh the page or refetch data to show updated rating
       window.location.reload();
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to submit rating');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      toast.error( errorMessage|| 'Failed to submit rating');
     } finally {
       setIsRating(false);
     }
@@ -96,11 +101,10 @@ export default function ResultCard({ result, type, onViewDetails }: ResultCardPr
           return (
             <div key={star} className="relative">
               <Star
-                className={`w-5 h-5 ${
-                  isFilled
+                className={`w-5 h-5 ${isFilled
                     ? 'fill-yellow-400 text-yellow-400'
                     : 'text-gray-300'
-                }`}
+                  }`}
               />
               {isHalf && (
                 <div className="absolute inset-0 overflow-hidden w-1/2">
@@ -128,17 +132,17 @@ export default function ResultCard({ result, type, onViewDetails }: ResultCardPr
       <div className="flex items-center justify-center gap-2">
         {[1, 2, 3, 4, 5].map((star) => (
           <button
+            aria-label="Rate {star} star"
             key={star}
             type="button"
             onClick={() => setSelectedRating(star)}
             className="transition-all hover:scale-125 focus:outline-none focus:ring-2 focus:ring-yellow-400 rounded"
           >
             <Star
-              className={`w-10 h-10 transition-colors ${
-                star <= selectedRating
+              className={`w-10 h-10 transition-colors ${star <= selectedRating
                   ? 'fill-yellow-400 text-yellow-400'
                   : 'text-gray-300 hover:text-gray-400'
-              }`}
+                }`}
             />
           </button>
         ))}
@@ -176,26 +180,22 @@ export default function ResultCard({ result, type, onViewDetails }: ResultCardPr
     { value: 'food', label: 'Food', icon: <Package className="w-5 h-5 text-orange-600" /> },
   ];
 
+
   const handleDonateClick = (donationType?: string) => {
     if (!user) {
       toast.error('Please sign in to donate');
       return;
     }
-    
-    if (type === 'ngo' && donationType) {
-      // Handle NGO donation navigation with type
-      toast.success(`Redirecting to ${donationType} donation...`);
-      // TODO: Navigate to donation page with NGO ID and donation type
-      console.log(`Donate ${donationType} to NGO:`, result._id);
-    } else if (type === 'campaign') {
-      // Handle campaign donation
-      toast.success('Redirecting to campaign donation...');
-      // TODO: Navigate to campaign donation page
-      console.log('Donate to campaign:', result._id);
-    }
-    setShowDonateDropdown(false);
-  };
 
+    if (type === 'ngo' && donationType) {
+      setSelectedDonationType(donationType as 'money' | 'books' | 'clothes' | 'food');
+      setShowDonationModal(true);
+      setShowDonateDropdown(false);
+    } else if (type === 'campaign') {
+      setSelectedDonationType('money');
+      setShowDonationModal(true);
+    }
+  };
   return (
     <>
       <div className="group p-6 border-2 border-gray-100 rounded-2xl hover:border-rose-300 hover:shadow-xl transition-all bg-white">
@@ -207,7 +207,7 @@ export default function ResultCard({ result, type, onViewDetails }: ResultCardPr
                 <h3 className="text-xl font-bold text-gray-900 mb-1 group-hover:text-rose-600 transition-colors line-clamp-2">
                   {result.hospitalName || result.organizationName || result.title}
                 </h3>
-                
+
                 {/* Location */}
                 {result.user && (
                   <p className="text-sm text-gray-500 mb-2 flex items-center gap-1">
@@ -281,13 +281,12 @@ export default function ResultCard({ result, type, onViewDetails }: ResultCardPr
               {/* Status Badge */}
               {result.status && (
                 <span
-                  className={`text-xs px-3 py-1 rounded-full font-semibold ${
-                    result.status === 'active'
+                  className={`text-xs px-3 py-1 rounded-full font-semibold ${result.status === 'active'
                       ? 'bg-emerald-100 text-emerald-700'
                       : result.status === 'completed'
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'bg-gray-100 text-gray-700'
-                  }`}
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'bg-gray-100 text-gray-700'
+                    }`}
                 >
                   {result.status.charAt(0).toUpperCase() + result.status.slice(1)}
                 </span>
@@ -396,7 +395,6 @@ export default function ResultCard({ result, type, onViewDetails }: ResultCardPr
             )}
           </div>
 
-          {/* Action Button and Impact Score */}
           <div className="flex-shrink-0 flex flex-col items-end gap-3">
             {/* Popularity Score Badge */}
             {result.popularityScore > 0 && (
@@ -422,7 +420,6 @@ export default function ResultCard({ result, type, onViewDetails }: ResultCardPr
                   Donate Now
                 </button>
 
-                {/* Custom Dropdown */}
                 {showDonateDropdown && (
                   <div className="absolute top-full right-0 mt-2 w-56 bg-white border-2 border-gray-200 rounded-xl shadow-2xl overflow-hidden z-50 animate-in slide-in-from-top-2 duration-200">
                     <div className="p-2">
@@ -459,7 +456,7 @@ export default function ResultCard({ result, type, onViewDetails }: ResultCardPr
                 Donate Now
               </button>
             )}
-            
+
             <Button
               onClick={() => onViewDetails(result._id)}
               className="bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 shadow-lg hover:shadow-xl transition-all whitespace-nowrap"
@@ -501,8 +498,8 @@ export default function ResultCard({ result, type, onViewDetails }: ResultCardPr
                 <p className="text-sm font-semibold text-gray-700 mb-3">Your Rating:</p>
                 {renderInteractiveStars()}
                 <p className="text-center mt-2 text-sm text-gray-600">
-                  {selectedRating === 0 
-                    ? 'Select a rating' 
+                  {selectedRating === 0
+                    ? 'Select a rating'
                     : `${selectedRating} star${selectedRating > 1 ? 's' : ''}`}
                 </p>
               </div>
@@ -548,6 +545,14 @@ export default function ResultCard({ result, type, onViewDetails }: ResultCardPr
           </div>
         </div>
       )}
+      <DonationModal
+        isOpen={showDonationModal}
+        onClose={() => setShowDonationModal(false)}
+        targetType={type === 'hospital' ? 'ngo' : type}
+        targetId={result._id}
+        targetName={result.hospitalName || result.organizationName || result.title}
+        itemType={selectedDonationType}
+      />
     </>
   );
 }

@@ -164,6 +164,8 @@ const Header = () => {
             {/* Close Button */}
             <button
               onClick={() => setShowModal(false)}
+              aria-label="Close modal"
+              title="Close"
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1.5 transition-all"
             >
               <X className="w-6 h-6" />

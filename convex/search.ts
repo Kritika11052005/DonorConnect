@@ -17,7 +17,7 @@ export const searchHospitals = query({
     minRating: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    let hospitals = await ctx.db
+    const hospitals = await ctx.db
       .query("hospitals")
       .withIndex("by_verified", (q) => q.eq("verified", true))
       .collect();
@@ -106,7 +106,7 @@ export const searchNGOs = query({
     minRating: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    let ngos = await ctx.db
+    const ngos = await ctx.db
       .query("ngos")
       .withIndex("by_verified", (q) => q.eq("verified", true))
       .collect();
@@ -182,7 +182,7 @@ export const searchNGOs = query({
   },
 });
 
-// Search and filter campaigns
+// Search and filter campaigns - NOW ONLY SHOWS CAMPAIGNS FROM VERIFIED NGOs
 export const searchCampaigns = query({
   args: {
     searchQuery: v.optional(v.string()),
@@ -205,7 +205,7 @@ export const searchCampaigns = query({
       campaigns = campaigns.filter((c) => c.status === args.status);
     }
 
-    // Join with NGO data
+    // Join with NGO data and filter by verified NGOs
     const campaignsWithDetails = await Promise.all(
       campaigns.map(async (campaign) => {
         const ngo = await ctx.db.get(campaign.ngoId);
@@ -217,8 +217,10 @@ export const searchCampaigns = query({
       })
     );
 
-    // Apply filters
-    let filtered = campaignsWithDetails;
+    // CRITICAL: Filter to only show campaigns from verified NGOs
+    let filtered = campaignsWithDetails.filter(
+      (c) => c.ngo !== null && c.ngo.verified === true
+    );
 
     // Search filter
     if (args.searchQuery && args.searchQuery.trim() !== "") {
@@ -276,14 +278,36 @@ export const searchCampaigns = query({
 });
 
 // Get popular causes (categories) with counts
+// Replace the getPopularCauses query in convex/search.ts with this:
+
 export const getPopularCauses = query({
   handler: async (ctx) => {
-    const ngos = await ctx.db.query("ngos").collect();
-    const campaigns = await ctx.db.query("fundraisingCampaigns").collect();
+    // Get only verified NGOs
+    const ngos = await ctx.db
+      .query("ngos")
+      .withIndex("by_verified", (q) => q.eq("verified", true))
+      .collect();
+    
+    const campaigns = await ctx.db
+      .query("fundraisingCampaigns")
+      .collect();
+
+    // Filter campaigns to only include those from verified NGOs
+    const verifiedCampaigns = await Promise.all(
+      campaigns.map(async (campaign) => {
+        const ngo = await ctx.db.get(campaign.ngoId);
+        return ngo?.verified ? campaign : null;
+      })
+    );
+
+    // Remove null entries (campaigns from unverified NGOs)
+    const filteredCampaigns = verifiedCampaigns.filter(
+      (c): c is NonNullable<typeof c> => c !== null
+    );
 
     const categoryCount: Record<string, number> = {};
 
-    // Count from NGOs
+    // Count from verified NGOs only
     ngos.forEach((ngo) => {
       ngo.categories.forEach((cat) => {
         const normalized = cat.toLowerCase();
@@ -291,8 +315,8 @@ export const getPopularCauses = query({
       });
     });
 
-    // Count from campaigns
-    campaigns.forEach((campaign) => {
+    // Count from campaigns of verified NGOs only
+    filteredCampaigns.forEach((campaign) => {
       const normalized = campaign.category.toLowerCase();
       categoryCount[normalized] = (categoryCount[normalized] || 0) + 1;
     });

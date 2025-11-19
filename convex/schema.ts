@@ -69,27 +69,33 @@ export default defineSchema({
     .index("by_averageRating", ["averageRating"]),
 
   // NGO Fundraising Campaigns
-  fundraisingCampaigns: defineTable({
-    ngoId: v.id("ngos"),
-    title: v.string(),
-    description: v.string(),
-    targetAmount: v.number(),
-    raisedAmount: v.number(),
-    startDate: v.number(),
-    endDate: v.optional(v.number()),
-    category: v.string(),
-    status: v.union(v.literal("active"), v.literal("completed"), v.literal("cancelled")),
-    createdAt: v.number(),
-    // NEW: Rating and popularity
-    averageRating: v.optional(v.number()),
-    totalRatings: v.optional(v.number()),
-    totalDonors: v.optional(v.number()), // Number of unique donors
-    popularityScore: v.optional(v.number()),
-  })
-    .index("by_ngoId", ["ngoId"])
-    .index("by_status", ["status"])
-    .index("by_category", ["category"])
-    .index("by_popularityScore", ["popularityScore"]),
+  // NGO Fundraising Campaigns
+fundraisingCampaigns: defineTable({
+  ngoId: v.id("ngos"),
+  title: v.string(),
+  description: v.string(),
+  targetAmount: v.number(),
+  raisedAmount: v.number(),
+  startDate: v.number(),
+  endDate: v.optional(v.number()),
+  category: v.string(),
+  status: v.union(
+    v.literal("active"), 
+    v.literal("completed"), 
+    v.literal("cancelled"),
+    v.literal("draft")  // ← ADD THIS LINE
+  ),
+  createdAt: v.number(),
+  // NEW: Rating and popularity
+  averageRating: v.optional(v.number()),
+  totalRatings: v.optional(v.number()),
+  totalDonors: v.optional(v.number()),
+  popularityScore: v.optional(v.number()),
+})
+  .index("by_ngoId", ["ngoId"])
+  .index("by_status", ["status"])
+  .index("by_category", ["category"])
+  .index("by_popularityScore", ["popularityScore"]),
 
   // Volunteers
   volunteers: defineTable({
@@ -263,6 +269,9 @@ hospitalOrganAvailability: defineTable({
     taxReceiptGenerated: v.boolean(),
     taxReceiptUrl: v.optional(v.string()),
     createdAt: v.number(),
+    stripePaymentSessionId: v.optional(v.id("stripePaymentSessions")),
+    stripePaymentIntentId: v.optional(v.string()),
+    receiptId: v.optional(v.id("donationReceipts")),
   })
     .index("by_donorId", ["donorId"])
     .index("by_ngoId", ["ngoId"])
@@ -334,4 +343,104 @@ hospitalOrganAvailability: defineTable({
   })
     .index("by_userId", ["userId"])
     .index("by_read", ["read"]),
+   // Stripe Payment Sessions
+  stripePaymentSessions: defineTable({
+    userId: v.id("users"),
+    donationType: v.union(
+      v.literal("ngo"),
+      v.literal("campaign")
+    ),
+    targetId: v.union(v.id("ngos"), v.id("fundraisingCampaigns")),
+    stripeSessionId: v.string(),
+    stripeCustomerId: v.optional(v.string()),
+    amount: v.number(), // Amount in rupees
+    currency: v.string(),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("processing"),
+      v.literal("completed"),
+      v.literal("failed"),
+      v.literal("cancelled")
+    ),
+    paymentType: v.union(
+      v.literal("one_time"),
+      v.literal("recurring")
+    ),
+    donationItemType: v.optional(v.union(
+      v.literal("money"),
+      v.literal("books"),
+      v.literal("clothes"),
+      v.literal("food")
+    )),
+    metadata: v.optional(v.any()),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+    completedAt: v.optional(v.number()),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_stripeSessionId", ["stripeSessionId"])
+    .index("by_status", ["status"])
+    .index("by_targetId", ["targetId"]),
+
+  // Stripe Subscriptions (for recurring donations)
+  stripeSubscriptions: defineTable({
+    userId: v.id("users"),
+    donationType: v.union(
+      v.literal("ngo"),
+      v.literal("campaign")
+    ),
+    targetId: v.union(v.id("ngos"), v.id("fundraisingCampaigns")),
+    stripeSubscriptionId: v.string(),
+    stripeCustomerId: v.string(),
+    stripePriceId: v.string(),
+    amount: v.number(), // Monthly amount in rupees
+    currency: v.string(),
+    interval: v.union(v.literal("monthly"), v.literal("yearly")),
+    status: v.union(
+      v.literal("active"),
+      v.literal("cancelled"),
+      v.literal("past_due"),
+      v.literal("paused")
+    ),
+    currentPeriodStart: v.number(),
+    currentPeriodEnd: v.number(),
+    cancelAtPeriodEnd: v.boolean(),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_stripeSubscriptionId", ["stripeSubscriptionId"])
+    .index("by_status", ["status"])
+    .index("by_targetId", ["targetId"]),
+
+  // Payment Events (webhook logs)
+  stripeWebhookEvents: defineTable({
+    eventId: v.string(),
+    type: v.string(),
+    data: v.any(),
+    processed: v.boolean(),
+    error: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_eventId", ["eventId"])
+    .index("by_processed", ["processed"]),
+
+  // Donation Receipts
+  donationReceipts: defineTable({
+    userId: v.id("users"),
+    donationId: v.id("donations"),
+    paymentSessionId: v.optional(v.id("stripePaymentSessions")),
+    receiptNumber: v.string(),
+    amount: v.number(),
+    currency: v.string(),
+    donationType: v.string(),
+    targetName: v.string(),
+    receiptUrl: v.optional(v.string()),
+    emailSent: v.boolean(),
+    emailSentAt: v.optional(v.number()),
+    generatedAt: v.number(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_donationId", ["donationId"])
+    .index("by_receiptNumber", ["receiptNumber"]),
 });

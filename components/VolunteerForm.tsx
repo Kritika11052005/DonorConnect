@@ -80,6 +80,7 @@ export default function VolunteerForm({ onClose }: VolunteerFormProps) {
       const endTimestamp = startTimestamp + (90 * 24 * 60 * 60 * 1000); // 3 months
 
       await createVolunteer({
+        //eslint-disable-next-line @typescript-eslint/no-explicit-any
         ngoId: selectedNgo as any,
         startDate: startTimestamp,
         endDate: endTimestamp,
@@ -92,7 +93,7 @@ export default function VolunteerForm({ onClose }: VolunteerFormProps) {
       toast.success('Successfully registered as volunteer!');
       setTimeout(() => {
         onClose();
-      }, 2000);
+      }, 2000);//eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.message || 'Failed to register as volunteer');
       toast.error(err.message || 'Failed to register as volunteer');
@@ -240,6 +241,7 @@ export default function VolunteerForm({ onClose }: VolunteerFormProps) {
             </div>
           </div>
           <button
+          aria-label="close modal"
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
@@ -280,6 +282,7 @@ export default function VolunteerForm({ onClose }: VolunteerFormProps) {
               Select NGO <span className="text-red-500">*</span>
             </label>
             <select
+            aria-label="select ngo"
               value={selectedNgo}
               onChange={(e) => setSelectedNgo(e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
@@ -322,6 +325,7 @@ export default function VolunteerForm({ onClose }: VolunteerFormProps) {
                   {/* Header */}
                   <div className="flex items-center justify-between mb-5">
                     <button
+                    aria-label="previous month"
                       type="button"
                       onClick={goToPreviousMonth}
                       className="p-2.5 hover:bg-emerald-50 rounded-xl transition-all group"
@@ -332,6 +336,7 @@ export default function VolunteerForm({ onClose }: VolunteerFormProps) {
                       {format(currentMonth, 'MMMM yyyy')}
                     </h3>
                     <button
+                    aria-label="next month"
                       type="button"
                       onClick={goToNextMonth}
                       className="p-2.5 hover:bg-emerald-50 rounded-xl transition-all group"
