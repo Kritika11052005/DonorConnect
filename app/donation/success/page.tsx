@@ -22,7 +22,7 @@ function SuccessContent() {
 
   // Get donation details from URL params or state
   const targetName = searchParams.get('target') || receiptData?.targetName || 'a cause';
-  const amount = searchParams.get('amount') || receiptData?.amount || 0;
+  const amount = Number(searchParams.get('amount')) || receiptData?.amount || 100;
 
   useEffect(() => {
     // Confetti animation code...
