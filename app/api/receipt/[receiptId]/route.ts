@@ -9,7 +9,7 @@ const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { receiptId: string } }
+  { params }: { params: Promise<{ receiptId: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -20,10 +20,10 @@ export async function GET(
         { status: 401 }
       );
     }
-
+    const { receiptId } = await params;
     // Fetch receipt data from Convex
-    const receipt = await convex.query(api.receipt.getReceiptById, {
-      receiptId: params.receiptId as Id<"donationReceipts">,
+     const receipt = await convex.query(api.receipt.getReceiptById, {
+      receiptId: receiptId as Id<"donationReceipts">,
     });
 
     if (!receipt) {

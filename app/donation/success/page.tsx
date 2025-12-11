@@ -291,7 +291,7 @@ function SuccessContent() {
                 </button>
                 
                 {/* Show native share on mobile devices */}
-                {typeof navigator !== 'undefined' && navigator.share && (
+                {typeof navigator !== 'undefined' && typeof navigator.share !== 'undefined' && (
                   <button 
                     onClick={handleNativeShare}
                     className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-colors shadow-md hover:shadow-lg"

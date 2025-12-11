@@ -91,11 +91,11 @@ export default function CampaignDetailsModal({ campaignId, onClose }: CampaignDe
             <span className="text-white font-semibold ml-2">
               {(campaign.averageRating || 0).toFixed(1)}
             </span>
-            {campaign?.totalRatings > 0 && (
-              <span className="text-white/80 text-sm">
-                ({campaign.totalRatings} reviews)
-              </span>
-            )}
+            {(campaign?.totalRatings ?? 0) > 0 && (
+  <span className="text-white/80 text-sm">
+    ({campaign.totalRatings} reviews)
+  </span>
+)}
           </div>
         </div>
 

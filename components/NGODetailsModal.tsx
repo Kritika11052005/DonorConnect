@@ -77,17 +77,16 @@ export default function NGODetailsModal({ ngoId, onClose }: NGODetailsModalProps
             {[1, 2, 3, 4, 5].map((star) => (
               <Star
                 key={star}
-                className={`w-5 h-5 ${
-                  star <= (ngo.averageRating || 0)
+                className={`w-5 h-5 ${star <= (ngo.averageRating || 0)
                     ? 'fill-yellow-400 text-yellow-400'
                     : 'text-white/30'
-                }`}
+                  }`}
               />
             ))}
             <span className="text-white font-semibold ml-2">
               {(ngo.averageRating || 0).toFixed(1)}
             </span>
-            {ngo?.totalRatings > 0 && (
+            {(ngo?.totalRatings ?? 0) > 0 && (
               <span className="text-white/80 text-sm">
                 ({ngo.totalRatings} reviews)
               </span>
